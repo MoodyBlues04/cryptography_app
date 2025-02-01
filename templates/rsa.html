@@ -72,7 +72,9 @@
         </div>
 
         <div class="col-4">
-            <button class="btn btn-secondary w-100" type="button" onclick="generateRandomParams()">Сгенерировать случайные параметры</button>
+            <button class="btn btn-secondary w-100" type="button" onclick="generateRandomParams()">Сгенерировать
+                случайные параметры
+            </button>
         </div>
     </div>
 
@@ -286,46 +288,6 @@
         visualizationDiv.appendChild(result);
     }
 
-    // Расшифровка RSA и визуализация
-    document.getElementById('decryptButton').addEventListener('click', () => {
-        if (!validateInputs()) {
-            alert('Пожалуйста, введите корректные параметры');
-            return;
-        }
-
-        const message = document.getElementById('message').value;
-        const charCodes = message.split(' ').map((charCode) => parseInt(charCode));
-        for (const charCode of charCodes) {
-            if (isNaN(charCode)) {
-                alert('Для расшифровки введите корректные числа через пробел в поле сообщения');
-                return;
-            }
-        }
-
-        const {_, privateKey} = getGenerationKeyPair();
-        const {n, d} = privateKey;
-
-        let messageBytes = [];
-        for (const encodedCharCode of charCodes) {
-            let plaintext = BigInt(encodedCharCode) ** BigInt(d) % BigInt(n);
-            const byteLength = Math.ceil(plaintext.toString(2).length / 8);
-            const bytes = [];
-            for (let i = 0; i < byteLength; i++) {
-                bytes.unshift(Number(plaintext & 0xffn));
-                plaintext >>= 8n;
-            }
-            messageBytes.push(...bytes);
-        }
-
-        const decryptedMessage = new TextDecoder('utf-8').decode(new Uint8Array(messageBytes));
-
-        const visualizationDiv = document.getElementById('visualization');
-        visualizationDiv.innerHTML = '<hr/> <h3 class="text-center">Результат</h3>';
-
-        makeResultMessage(decryptedMessage, visualizationDiv);
-    });
-
-    // Шифрование RSA и визуализация
     document.getElementById('encryptButton').addEventListener('click', () => {
         if (!validateInputs()) {
             alert('Пожалуйста, введите корректные параметры');
@@ -343,7 +305,11 @@
 
         const {publicKey, _} = getGenerationKeyPair();
 
-        // Создание таблицы для визуализации
+        // Convert the message to a UTF-8 byte array
+        const encoder = new TextEncoder();
+        const messageBytes = encoder.encode(message);
+
+        // Create a table for visualization
         const table = document.createElement('table');
         const thead = document.createElement('thead');
         table.appendChild(thead);
@@ -364,20 +330,52 @@
         const headers = ['#', 'Символ', 'Код символа', 'Exp = charInt ^ e', 'CipherChar = exp % n'];
         addRow(thead, headers, 'th');
 
-        let encodedMessage = '';
+        let encryptedMessage = '';
 
-        for (let i = 0; i < message.length; i++) {
-            const char = message[i];
-            const charInt = char.charCodeAt(0);
-            const exp = Number(charInt) ** Number(publicKey.e);
-            const cipherChar = Number(exp) % Number(publicKey.n);
-            const rowData = [i + 1, char, charInt, exp, cipherChar]
+        // Encrypt each byte and add rows to the table
+        for (let i = 0; i < messageBytes.length; i++) {
+            const byte = messageBytes[i];
+            const exp = BigInt(byte) ** BigInt(publicKey.e);
+            const cipherChar = exp % BigInt(publicKey.n);
+            const rowData = [i + 1, String.fromCharCode(byte), byte, exp.toString(), cipherChar.toString()];
             addRow(tbody, rowData);
-            encodedMessage += cipherChar + ' ';
+            encryptedMessage += cipherChar.toString() + ' ';
         }
 
-        makeResultMessage(encodedMessage.trim(), visualizationDiv);
+        // Display the encrypted message
+        makeResultMessage(encryptedMessage.trim(), visualizationDiv);
+
+        // Add the table to the visualization div
         visualizationDiv.appendChild(table);
+    });
+
+    document.getElementById('decryptButton').addEventListener('click', () => {
+        if (!validateInputs()) {
+            alert('Пожалуйста, введите корректные параметры');
+            return;
+        }
+
+        const encryptedMessage = document.getElementById('message').value;
+        const encryptedBytes = encryptedMessage.split(' ').map((byte) => BigInt(byte));
+
+        const {_, privateKey} = getGenerationKeyPair();
+        const {n, d} = privateKey;
+
+        // Decrypt each byte
+        let decryptedBytes = [];
+        for (const encryptedByte of encryptedBytes) {
+            const decryptedByte = Number(encryptedByte ** BigInt(d) % BigInt(n));
+            decryptedBytes.push(decryptedByte);
+        }
+
+        // Convert the byte array back to a string
+        const decoder = new TextDecoder('utf-8');
+        const decryptedMessage = decoder.decode(new Uint8Array(decryptedBytes));
+
+        const visualizationDiv = document.getElementById('visualization');
+        visualizationDiv.innerHTML = '<hr/> <h3 class="text-center">Результат</h3>';
+
+        makeResultMessage(decryptedMessage, visualizationDiv);
     });
 </script>
 </body>
