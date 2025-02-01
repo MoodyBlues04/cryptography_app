@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caesar Cipher Visualization</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f9f9f9;
+            font-family: Arial, sans-serif;
+        }
+
+        #info{
+            text-align: center; /* Центрирование текста */
+            max-width: 600px; /* Ограничение ширины */
+            padding: 20px; /* Отступы внутри контейнера */
+            border-radius: 10px; /* Закругленные углы */
+        }
+
+        #message {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+        }
+
+        .currentIndex {
+            font-weight: bold;
+            transform: scale(1.2);
+        }
+
+        #alphabet {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            font-size: 2rem;
+        }
+
+        .letter {
+            position: relative;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .letter .index {
+            font-size: 1rem;
+            color: #555;
+        }
+
+        .letter .char {
+            transition: color 0.3s, transform 0.3s;
+        }
+
+        .highlight {
+            color: red;
+            transform: scale(1.2);
+        }
+
+        .found {
+            color: red;
+            font-weight: bold;
+            transform: scale(1.2);
+        }
+
+        #inputContainer {
+            margin-bottom: 20px;
+        }
+
+        #inputText, #inputShift {
+            padding: 8px;
+            margin: 5px;
+            font-size: 1rem;
+        }
+
+        #startButton {
+            padding: 8px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+            
+        #decryptButton {
+            padding: 8px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h1>Шифр Цезаря</h1>
+        <p>Шифр Цезаря является шифром подстановки. Шифротекст формируется из символов того же алфавита, которым было записано сообщение.
+            Принцип работы шифра заключается в замене исходного символа сообщения новым, полученным при сдвиге от данного символа на 3 позиции.
+            Такой сдвиг будет использован по умолчанию, если пользователь не введет новое значение ключа. Рекомендуется в качестве ключа число
+            от 1 до 33, чтобы избежать кольцевого перебора символов по алфавиту.
+        </p>
+    </div>
+    <div id="inputContainer">
+        <input type="text" id="inputText" placeholder="Введите сообщение" />
+        <input type="number" id="inputShift" placeholder="Введите ключ" />
+        <button id="startButton">Зашифровать</button>
+        <button id="decryptButton">Расшифровать</button>
+    </div>
+    <div id="message">Результат: </div>
+    <div id="alphabet"></div>
+
+    <script>
+        // Генерация алфавита
+        const alphabet = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ';
+        const alphabetContainer = document.getElementById('alphabet');
+        alphabet.split('').forEach((char, index) => {
+            const letterDiv = document.createElement('div');
+            letterDiv.className = 'letter';
+            letterDiv.innerHTML = `
+                <span class="index">${index}</span>
+                <span class="char">${char}</span>
+            `;
+            alphabetContainer.appendChild(letterDiv);
+        });
+
+        // Функция отправки текста на сервер
+        async function fetchEncryptionSteps(text, shift) {
+            const response = await fetch('/caesar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, shift })
+            });
+            const data = await response.json();
+            return data.steps; // Массив с шагами
+        }
+
+        // Функция для отправки данных на сервер для расшифрования
+        async function fetchDecryptionSteps(text, shift) {
+            const response = await fetch('/caesar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, shift, decrypt: true }) // Указываем флаг расшифрования
+            });
+            const data = await response.json();
+            return data.steps; // Возвращаем шаги
+        }
+
+        // Анимация шифрования
+        async function animateEncryption(steps) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = 'Результат: '; // Сброс результата
+
+            for (const step of steps) { // от сивола к символу переходим здесь
+                console.log(steps)
+                let { original_index, new_index, new_char } = step;
+                let currentIndex;
+
+                if (original_index !== null) {
+                    const letters = document.querySelectorAll('.letter');
+                    const indices = document.querySelectorAll('.index'); // Получаем все индексы
+                    const lenghtIndices = indices.length // Размер алфавита
+                    let originalLetter = letters[original_index].querySelector('.char'); // Буква, которая будет шифроваться
+
+                    // Подсветка исходной буквы красным
+                    originalLetter.classList.add('highlight');
+                    await new Promise((resolve) => setTimeout(resolve, 1500)); // Задержка для отображения
+
+                    // Итерация по индексам в алфавите, подсвечиваем номера на пути к искомой букве
+                    if (new_index <= original_index) {
+
+                        for (let i = original_index + 1; i <= lenghtIndices - 1; i++) {
+                            currentIndex = indices[i];
+                            currentIndex.classList.add('currentIndex'); // подсветка on
+                            await new Promise((resolve) => setTimeout(resolve, 500));
+                            currentIndex.classList.remove('currentIndex'); // подсветка off
+                        }
+                        for (let i = 0; i <= new_index; i++) {
+                            currentIndex = indices[i];
+                            currentIndex.classList.add('currentIndex'); // подсветка on
+                            await new Promise((resolve) => setTimeout(resolve, 500)); // пауза
+                            currentIndex.classList.remove('currentIndex');
+                        }
+                    }
+                    else {
+                        for (let i = original_index + 1; i <= new_index; i++) {
+                            currentIndex = indices[i];
+                            currentIndex.classList.add('currentIndex'); // подсветка on
+                            await new Promise((resolve) => setTimeout(resolve, 500)); // пауза
+                            currentIndex.classList.remove('currentIndex'); // подсветка off 
+                        }
+                    }
+                    
+                    // Подсветка искомого индекса
+                    currentIndex.style.color = 'red';
+
+                    // Когда нашли искомую букву, подсвечиваем её красным
+                    const newLetter = letters[new_index].querySelector('.char');
+
+                    newLetter.classList.add('found');
+                    // Подсвечиваем зашифрованную букву
+                    
+                    // Убираем подсветку с исходной буквы
+                    originalLetter.classList.remove('highlight');
+
+                    // Обновление сообщения
+                    messageDiv.textContent += new_char; // Добавление нового символа
+
+                    // задержка перед переходом к следующему символу исходного сообщения
+                    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+                    // убираем подсветку искомого символа
+                    currentIndex.style.color = '';
+                    newLetter.classList.remove('found');
+                    await new Promise((resolve) => setTimeout(resolve, 500));
+                }
+                else {
+                    messageDiv.textContent += new_char
+                }
+            }
+        }
+
+        
+        async function animateDecryption(steps) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = 'Результат: '; // Сбрасываем результат
+
+            for (const step of steps) {
+                let { original_index, new_index, new_char } = step; // Для расшифрования
+                console.log(original_index, new_index, new_char)
+                let currentIndex;
+
+                if (original_index !== null) {
+                    const letters = document.querySelectorAll('.letter');
+                    const indices = document.querySelectorAll('.index'); // Индексы алфавита
+                    const lengthIndices = indices.length; // Размер алфавита
+                    let encryptedLetter = letters[original_index].querySelector('.char'); // Буква, которая будет расшифровываться
+
+                    // Подсветка зашифрованной буквы красным
+                    encryptedLetter.classList.add('highlight');
+                    await new Promise((resolve) => setTimeout(resolve, 1500)); // Задержка для отображения
+
+                    // Итерация по индексам, подсвечиваем номера
+                    if (new_index <= original_index) {
+                        for (let i = original_index - 1; i >= new_index; i--) {
+                            currentIndex = indices[i];
+                            currentIndex.classList.add('currentIndex'); // Подсвечиваем номер
+                            await new Promise((resolve) => setTimeout(resolve, 500)); // Задержка;
+                            currentIndex.classList.remove('currentIndex');
+                        }
+                    }
+                    else {
+                        for (let i = original_index - 1; i >= 0; i--) {
+                            currentIndex = indices[i];
+                            currentIndex.classList.add('currentIndex'); // Подсвечиваем номер
+                            await new Promise((resolve) => setTimeout(resolve, 500)); // Задержка
+                            currentIndex.classList.remove('currentIndex');
+                        }
+                        for (let i = indices.length - 1; i >= new_index; i--) {
+                            currentIndex = indices[i];
+                            currentIndex.classList.add('currentIndex'); // Подсвечиваем номер
+                            await new Promise((resolve) => setTimeout(resolve, 500)); // Задержка
+                            currentIndex.classList.remove('currentIndex');
+                        }
+                    }
+                    
+                    // подсветка искомого индекса
+                    currentIndex.style.color = 'red';
+                    // Подсветка исходной буквы
+                    const originalLetter = letters[new_index].querySelector('.char');
+                    originalLetter.classList.add('found');
+                    encryptedLetter.classList.remove('highlight');
+
+                    // Обновление сообщения
+                    messageDiv.textContent += new_char; // Добавляем символ в результат
+
+                    // Задержка перед следующим символом
+                    await new Promise((resolve) => setTimeout(resolve, 1500));
+                    currentIndex.style.color = '';
+                    originalLetter.classList.remove('found');
+                }
+                else {
+                    messageDiv.textContent += new_char
+                }
+            }
+        }
+
+
+        // ДОДЕЛАТЬ ПРОВЕРКУ КЛЮЧА И ТЕКСТА ДЛЯ ШИФРОВАНИЯ И РАСШИФРОВАНИЯ
+        // Запуск процесса шифрования по кнопке
+        document.getElementById('startButton').addEventListener('click', () => {
+            const text = document.getElementById('inputText').value.toUpperCase(); // Получаем текст
+            const shift = (parseInt(document.getElementById('inputShift').value)) || 3; // Получаем сдвиг (по умолчанию 0)
+
+            if ((shift == '') || (shift == 0)) {
+                alert('Будет использован ключ по умолчанию.')
+            }
+            else {
+                if ((shift < 1) || (shift > 35)) {
+                    alert('Настоятельно рекомендуем использовать ключ от 1 до 33.')
+                }
+                else {
+                    if (text) {
+                        fetchEncryptionSteps(text, shift)
+                            .then(steps => animateEncryption(steps));
+                    }
+                    else {
+                        alert('Сначала введите сообщение.');
+                    }
+                }
+            
+            }
+        });
+
+
+        document.getElementById('decryptButton').addEventListener('click', () => {
+            const text = document.getElementById('inputText').value.toUpperCase(); // Получаем текст
+            const shift = (parseInt(document.getElementById('inputShift').value)) || 3; // Получаем сдвиг (по умолчанию 3)
+
+            if ((shift < 1) || (shift > 35)) {
+                alert('Настоятельно рекомендуем использовать ключ от 1 до 33.')
+            }
+            else {
+                if (text) {
+                    fetchDecryptionSteps(text, shift)
+                        .then(steps => animateDecryption(steps));
+                }
+                else {
+                    alert('Сначала введите сообщение.');
+                }
+            }
+                    
+        });
+
+    </script>
+</body>
+</html>

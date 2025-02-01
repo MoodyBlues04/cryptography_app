@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f4;
+        }
+
+        #visualization {
+            margin-top: 20px;
+            width: 90%;
+            max-width: 1200px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+
+        #InputContainer {
+            text-align: center;
+        }
+
+        .animation-step {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .bit-sequence {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            flex-wrap: wrap;
+        }
+
+        .bit-group {
+            display: flex;
+            gap: 2px; /* Отступ между ячейками в группе */
+            margin-bottom: 10px; /* Отступ между группами */
+            align-items: center;
+        }
+
+        .bit {
+            width: 39px;
+            height: 28px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            color: white;
+            background: #4caf50;
+            border-radius: 4px;
+        }
+
+        .bit.key {
+            background: #ff9800;
+        }
+
+        .bit.result {
+            background: #2196f3;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        #inputText {
+            width: 400px;
+        }
+
+        #startButton {
+            color: #d6e014;
+        }
+
+    </style>
+</head>
+<body>
+<!--<div id="InputContainer">
+        <input type="text" id="inputText" placeholder="Введите сообщение" />
+        <input type="number" id="inputShift" placeholder="Введите ключ" />
+        <button id="startButton">Зашифровать</button>
+        <button id="decryptButton">Расшифровать</button>
+    </div>-->
+    <div>
+    <h2>ГОСТ 28147-89</h2>
+    </div>
+    <div id="visualization">
+        <!-- Шаг 1 -->
+        <div id="InputContainer">
+            <input type="text" id="inputText" placeholder="Введите сообщение" />
+            <button id="startButton">Зашифровать</button>
+            <button id="decryptButton">Расшифровать</button>
+        </div>
+        <div class="animation-step" id="step1">
+            <h3>1. Выработка 256 бит ключа</h3>
+            <p>Вводится 256 бит ключа.</p>
+            <div class="bit-sequence">
+                <!-- Пример отображения ключа -->
+                <div class="bit key">W1</div>
+                <div class="bit key">W2</div>
+                <div class="bit key">W3</div>
+                <div class="bit key">W4</div>
+                ...
+                <div class="bit key">W32</div>
+                ...
+                <div class="bit key">W64</div>
+                ...
+                <div class="bit key">W255</div>
+                <div class="bit key">W256</div>
+            </div>
+            <p>Ключ делится на 8 подключей по 32 бита каждый:</p>
+            <div class="bit-group">
+                <!-- Пример 32-битных подключей -->
+                <p>X0 = </p>
+                <div class="bit key">W32</div>
+                <div class="bit key">W31</div>
+                ...
+                <div class="bit key">W1</div>
+            </div>
+            <div class="bit-group">
+                <p>X1 = </p>
+                <div class="bit key">W64</div>
+                <div class="bit key">W63</div>
+                ...
+                <div class="bit key">W33</div>
+            </div>
+            <div class="bit-group">
+                <p>X2 = </p>
+                <div class="bit key">W96</div>
+                <div class="bit key">W95</div>
+                ...
+                <div class="bit key">W65</div>
+            </div>
+            <div class="bit-group">
+                <p>X3 = </p>
+                <div class="bit key">W128</div>
+                <div class="bit key">W127</div>
+                ...
+                <div class="bit key">W97</div>
+            </div>
+            <div class="bit-group">
+                <p>X4 = </p>
+                <div class="bit key">W160</div>
+                <div class="bit key">W159</div>
+                ...
+                <div class="bit key">W129</div>
+            </div>
+            <div class="bit-group">
+                <p>X5 = </p>
+                <div class="bit key">W192</div>
+                <div class="bit key">W191</div>
+                ...
+                <div class="bit key">W161</div>
+            </div>
+            <div class="bit-group">
+                <p>X6 = </p>
+                <div class="bit key">W224</div>
+                <div class="bit key">W223</div>
+                ...
+                <div class="bit key">W193</div>
+            </div>
+            <div class="bit-group">
+                <p>X7 = </p>
+                <div class="bit key">W256</div>
+                <div class="bit key">W255</div>
+                ...
+                <div class="bit key">W225</div>
+            </div>
+        </div>
+      
+        <!-- Шаг 2 -->
+        <div class="animation-step" id="step2">
+            <h3>2. Ввод синхропосылки</h3>
+            <p>Синхропосылка длиной 64 бит:</p>
+            <div class="bit-sequence">
+                <div class="bit">1</div>
+                <div class="bit">0</div>
+                ...
+            </div>
+            <p>Синхропосылка делится на две части (N1 и N2):</p>
+            <div class="bit-sequence">
+                <div class="bit">N1</div>
+                <div class="bit">N2</div>
+            </div>
+        </div>
+      
+        <!-- Шаг 3 -->
+        <div class="animation-step" id="step3">
+            <h3>3. Шифрование простой заменой</h3>
+            <p>Раунд 1: Левая часть суммируется с X0:</p>
+            <div class="bit-sequence">
+                <div class="bit">N1</div> + <div class="bit key">X0</div> = <div class="bit result">R</div>
+            </div>
+            <p>Результат делится на 8 частей по 4 бита:</p>
+            <div class="bit-sequence">
+                <div class="bit result">0001</div>
+                <div class="bit result">0010</div>
+                ...
+            </div>
+        </div>
+      
+        <button onclick="nextStep()">Следующий шаг</button>
+      </div>
+    </div>
+</body>
+<script>
+    // Функция отправки текста на сервер
+    async function fetchEncryptionSteps(text) {
+        const response = await fetch('/gost2814789', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+        });
+        const data = await response.json();
+        return data.encrypted_text; // Массив с шагами
+    }
+
+    // Функция для отправки данных на сервер для расшифрования
+    async function fetchDecryptionSteps(text, shift) {
+        const response = await fetch('/caesar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, shift, decrypt: true }) // Указываем флаг расшифрования
+        });
+        const data = await response.json();
+        return data.steps; // Возвращаем шаги
+    }
+
+    let currentStep = 0;
+
+    function nextStep() {
+        const steps = document.querySelectorAll('.animation-step');
+        if (currentStep < steps.length) {
+            steps[currentStep].style.display = 'block';
+            currentStep++;
+        }
+        if (currentStep === steps.length) {
+            document.querySelector('button').disabled = true;
+        }
+    }
+
+    window.onload = () => {
+    document.querySelectorAll('.animation-step').forEach(step => {
+        step.style.display = 'none';
+    });
+    nextStep(); // Показать первый шаг
+    };
+    // ДОДЕЛАТЬ ПРОВЕРКУ КЛЮЧА И ТЕКСТА ДЛЯ ШИФРОВАНИЯ И РАСШИФРОВАНИЯ
+    // Запуск процесса шифрования по кнопке
+    document.getElementById('startButton').addEventListener('click', () => {
+        const text = document.getElementById('inputText').value; // Получаем текст
+        if (text) {
+            fetchEncryptionSteps(text)
+        }
+        else {
+            alert('Сначала введите сообщение.');
+        }
+    });
+
+
+    document.getElementById('decryptButton').addEventListener('click', () => {
+        const text = document.getElementById('inputText').value; // Получаем текст
+        if (text) {
+            fetchDecryptionSteps(text, shift)
+        }
+        else {
+            alert('Сначала введите сообщение.');
+        }
+    });
+            
+
+
+
+
+</script>
+</html>

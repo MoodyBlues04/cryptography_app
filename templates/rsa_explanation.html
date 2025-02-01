@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSA Encryption and Decryption Explanation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .code {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: "Courier New", monospace;
+            overflow-x: auto;
+        }
+
+        .step {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>RSA Encryption and Decryption Explanation</h1>
+    <p>This page explains the RSA encryption and decryption process based on the provided Python code.</p>
+
+    <div class="step">
+        <h2>1. Key Generation</h2>
+        <p>RSA keys are generated using two large prime numbers (<code>p</code> and <code>q</code>).</p>
+        <ul>
+            <li><strong>Modulus (<code>n</code>)</strong>: <code>n = p * q</code></li>
+            <li><strong>Euler's Totient (<code>phi</code>)</strong>: <code>phi = (p - 1) * (q - 1)</code></li>
+            <li><strong>Public Key (<code>e</code>)</strong>: A number coprime with <code>phi</code>.</li>
+            <li><strong>Private Key (<code>d</code>)</strong>: The modular inverse of <code>e</code> modulo
+                <code>phi</code>.
+            </li>
+        </ul>
+    </div>
+
+    <div class="step">
+        <h2>2. Encryption</h2>
+        <p>To encrypt a message:</p>
+        <ol>
+            <li>Convert the message into bytes.</li>
+            <li>For each byte, compute <code>ciphertext = pow(byte, e, n)</code>.</li>
+            <li>Store the ciphertext as a space-separated string.</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h2>3. Decryption</h2>
+        <p>To decrypt the ciphertext:</p>
+        <ol>
+            <li>Split the ciphertext into chunks.</li>
+            <li>For each chunk, compute <code>plaintext = pow(chunk, d, n)</code>.</li>
+            <li>Convert the plaintext back into bytes and decode it into a string.</li>
+        </ol>
+    </div>
+</div>
+</body>
+</html>
