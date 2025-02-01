@@ -76,7 +76,7 @@ def rsa():
     return render_template('rsa.html')
 
 @app.route('/rsa_explanation', methods=['GET', 'POST'])
-def rsa():
+def rsa_explanation():
     # Объяснение работы RSA
     return render_template('rsa_explanation.html')
 
