@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RSA Visualization</title>
+    <title>Визуализация RSA</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -29,75 +29,73 @@
 <div class="container">
     <h2 class="text-center">RSA</h2>
 
-    <a href="/rsa_explanation">Algorithm Explanation</a>
+    <a href="/rsa_explanation">Объяснение алгоритма</a>
 
     <div class="row g-3 needs-validation justify-content-center">
-        <h3 class="text-center">RSA Parameters</h3>
+        <h3 class="text-center">Параметры RSA</h3>
 
         <div class="col-md-4">
             <label for="p" class="form-label">P:</label>
-            <input type="number" class="form-control" id="p" placeholder="Enter p">
+            <input type="number" class="form-control" id="p" placeholder="Введите p">
             <div class="invalid-feedback" id="p-error-message">
             </div>
         </div>
         <div class="col-md-4">
             <label for="q" class="form-label">Q:</label>
-            <input type="number" class="form-control" id="q" placeholder="Enter q">
+            <input type="number" class="form-control" id="q" placeholder="Введите q">
             <div class="invalid-feedback" id="q-error-message">
             </div>
         </div>
         <div class="col-md-4">
             <label for="phi" class="form-label">Phi:</label>
-            <input type="number" class="form-control" id="phi" placeholder="Enter phi">
+            <input type="number" class="form-control" id="phi" placeholder="Введите phi">
             <div class="invalid-feedback" id="phi-error-message">
             </div>
         </div>
         <div class="col-md-4">
             <label for="n" class="form-label">N:</label>
-            <input type="number" class="form-control" id="n" placeholder="Enter n">
+            <input type="number" class="form-control" id="n" placeholder="Введите n">
             <div class="invalid-feedback" id="n-error-message">
             </div>
         </div>
         <div class="col-md-4">
             <label for="e" class="form-label">E:</label>
-            <input type="number" class="form-control" id="e" placeholder="Enter e">
+            <input type="number" class="form-control" id="e" placeholder="Введите e">
             <div class="invalid-feedback" id="e-error-message">
             </div>
         </div>
         <div class="col-md-4">
             <label for="d" class="form-label">D:</label>
-            <input type="number" class="form-control" id="d" placeholder="Enter d">
+            <input type="number" class="form-control" id="d" placeholder="Введите d">
             <div class="invalid-feedback" id="d-error-message">
             </div>
         </div>
 
         <div class="col-4">
-            <button class="btn btn-secondary w-100" type="button" onclick="generateRandomParams()">Generate random
-                params
-            </button>
+            <button class="btn btn-secondary w-100" type="button" onclick="generateRandomParams()">Сгенерировать случайные параметры</button>
         </div>
     </div>
 
     <hr/>
 
-    <h3 class="text-center">Message</h3>
-    <!-- Message Input Area -->
+    <h3 class="text-center">Сообщение</h3>
+    <!-- Область ввода сообщения -->
     <div class="d-flex mt-5 mb-3 w-100 row justify-content-center">
         <div class="d-flex justify-content-center align-items-center col-12">
-            <label for="message" class="me-2">Message:</label>
+            <label for="message" class="me-2">Сообщение:</label>
             <input type="text" id="message" class="form-control me-2" value="test message" style="width: 300px;">
-            <button id="encryptButton" class="btn btn-primary me-2">Encrypt</button>
-            <button id="decryptButton" class="btn btn-primary">Decrypt</button>
+            <button id="encryptButton" class="btn btn-primary me-2">Зашифровать</button>
+            <button id="decryptButton" class="btn btn-primary">Расшифровать</button>
         </div>
         <div class="d-flex col-8 mt-2">
-            <small> For decryption mode please enter encoded numbers via space </small>
+            <small> Для режима расшифровки введите закодированные числа через пробел </small>
         </div>
     </div>
     <div id="visualization" class="mt-4">
     </div>
 </div>
 
-<!-- Bootstrap JS and dependencies -->
+<!-- Bootstrap JS и зависимости -->
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 <!-- Bootstrap Icons -->
@@ -127,6 +125,7 @@
     }
 
     // todo enter in form
+    // такой маленький диапазон только ввиду учебных целей проекта
     const LOW_PRIME_BOUND = 0;
     const HIGH_PRIME_BOUND = 3_000;
     let PRIMES = [];
@@ -144,7 +143,7 @@
             if (gcd(e, phi) === 1) return e;
             e++;
         }
-        throw new Error(`Cannot find E for phi=${phi}`);
+        throw new Error(`Не удалось найти E для phi=${phi}`);
     }
 
     function extendedGcd(a, b) {
@@ -155,7 +154,7 @@
 
     function modInverse(a, m) {
         const [g, x] = extendedGcd(a, m);
-        if (g !== 1) throw new Error('modular inverse does not exist');
+        if (g !== 1) throw new Error('Обратное по модулю не существует');
         return (x % m + m) % m;
     }
 
@@ -210,16 +209,16 @@
             removeErrorMessage(inputId);
         }
         if (!isPrime(p)) {
-            addErrorMessage('p', 'P must be prime');
+            addErrorMessage('p', 'P должно быть простым числом');
             return false;
         }
         if (!isPrime(q)) {
-            addErrorMessage('q', 'Q must be prime');
+            addErrorMessage('q', 'Q должно быть простым числом');
             return false;
         }
         if (p === q) {
-            addErrorMessage('p', 'P and Q must not be equal');
-            addErrorMessage('q', 'P and Q must not be equal');
+            addErrorMessage('p', 'P и Q не должны быть равны');
+            addErrorMessage('q', 'P и Q не должны быть равны');
             return false;
         }
         if (n !== p * q) {
@@ -239,7 +238,7 @@
             return false;
         }
         if (d >= n || e * d % phi !== 1) {
-            addErrorMessage('d', 'E * D != 1 (mod PHI). So D is not an inverse of E');
+            addErrorMessage('d', 'E * D != 1 (mod PHI). D не является обратным для E');
             return false;
         }
         return true;
@@ -282,15 +281,15 @@
         const label = document.createElement('label');
         label.className = 'form-label';
         label.htmlFor = 'result';
-        label.innerText = 'Result:';
+        label.innerText = 'Результат:';
         visualizationDiv.appendChild(label);
         visualizationDiv.appendChild(result);
     }
 
-    // RSA Decryption and Visualization
+    // Расшифровка RSA и визуализация
     document.getElementById('decryptButton').addEventListener('click', () => {
         if (!validateInputs()) {
-            alert('Please, enter correct parameters');
+            alert('Пожалуйста, введите корректные параметры');
             return;
         }
 
@@ -298,7 +297,7 @@
         const charCodes = message.split(' ').map((charCode) => parseInt(charCode));
         for (const charCode of charCodes) {
             if (isNaN(charCode)) {
-                alert('For decryption, please, enter correct numbers via spaces into message field');
+                alert('Для расшифровки введите корректные числа через пробел в поле сообщения');
                 return;
             }
         }
@@ -321,30 +320,30 @@
         const decryptedMessage = new TextDecoder('utf-8').decode(new Uint8Array(messageBytes));
 
         const visualizationDiv = document.getElementById('visualization');
-        visualizationDiv.innerHTML = '<hr/> <h3 class="text-center">Result</h3>';
+        visualizationDiv.innerHTML = '<hr/> <h3 class="text-center">Результат</h3>';
 
         makeResultMessage(decryptedMessage, visualizationDiv);
     });
 
-    // RSA Encryption and Visualization
+    // Шифрование RSA и визуализация
     document.getElementById('encryptButton').addEventListener('click', () => {
         if (!validateInputs()) {
-            alert('Please, enter correct parameters');
+            alert('Пожалуйста, введите корректные параметры');
             return;
         }
 
         const message = document.getElementById('message').value;
         const visualizationDiv = document.getElementById('visualization');
-        visualizationDiv.innerHTML = '<hr/> <h3 class="text-center">Result</h3>';
+        visualizationDiv.innerHTML = '<hr/> <h3 class="text-center">Результат</h3>';
 
         if (!message) {
-            alert('Please, enter a message to encrypt.');
+            alert('Пожалуйста, введите сообщение для шифрования.');
             return;
         }
 
         const {publicKey, _} = getGenerationKeyPair();
 
-        // Create a table for visualization
+        // Создание таблицы для визуализации
         const table = document.createElement('table');
         const thead = document.createElement('thead');
         table.appendChild(thead);
@@ -362,7 +361,7 @@
             table.appendChild(row);
         }
 
-        const headers = ['#', 'Char', 'Char code', 'Exp = charInt ^ e', 'CipherChar = exp % n'];
+        const headers = ['#', 'Символ', 'Код символа', 'Exp = charInt ^ e', 'CipherChar = exp % n'];
         addRow(thead, headers, 'th');
 
         let encodedMessage = '';

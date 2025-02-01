@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RSA Encryption and Decryption Explanation</title>
+    <title>Объяснение шифрования и дешифрования RSA</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,40 +41,38 @@
 </head>
 <body>
 <div class="container">
-    <h1>RSA Encryption and Decryption Explanation</h1>
+    <h1>Объяснение шифрования и дешифрования RSA</h1>
 
-    <a href="/rsa">Algorithm Implementation</a>
+    <a href="/rsa">Реализация алгоритма</a>
 
     <div class="step">
-        <h2>1. Key Generation</h2>
-        <p>RSA keys are generated using two large prime numbers (<code>p</code> and <code>q</code>).</p>
+        <h2>1. Генерация ключей</h2>
+        <p>Ключи RSA генерируются с использованием двух больших простых чисел (<code>p</code> и <code>q</code>).</p>
         <ul>
-            <li><strong>Modulus (<code>n</code>)</strong>: <code>n = p * q</code></li>
-            <li><strong>Euler's Totient (<code>phi</code>)</strong>: <code>phi = (p - 1) * (q - 1)</code></li>
-            <li><strong>Public Key (<code>e</code>)</strong>: A number coprime with <code>phi</code>.</li>
-            <li><strong>Private Key (<code>d</code>)</strong>: The modular inverse of <code>e</code> modulo
-                <code>phi</code>.
-            </li>
+            <li><strong>Модуль (<code>n</code>)</strong>: <code>n = p * q</code></li>
+            <li><strong>Функция Эйлера (<code>phi</code>)</strong>: <code>phi = (p - 1) * (q - 1)</code></li>
+            <li><strong>Публичный ключ (<code>e</code>)</strong>: Число, взаимно простое с <code>phi</code>.</li>
+            <li><strong>Приватный ключ (<code>d</code>)</strong>: Модульное обратное число для <code>e</code> по модулю <code>phi</code>.</li>
         </ul>
     </div>
 
     <div class="step">
-        <h2>2. Encryption</h2>
-        <p>To encrypt a message:</p>
+        <h2>2. Шифрование</h2>
+        <p>Чтобы зашифровать сообщение:</p>
         <ol>
-            <li>Convert the message into bytes.</li>
-            <li>For each byte, compute <code>ciphertext = pow(byte, e, n)</code>.</li>
-            <li>Store the ciphertext as a space-separated string.</li>
+            <li>Преобразуйте сообщение в байты.</li>
+            <li>Для каждого байта вычислите <code>ciphertext = pow(byte, e, n)</code>.</li>
+            <li>Сохраните зашифрованный текст в виде строки, разделенной пробелами.</li>
         </ol>
     </div>
 
     <div class="step">
-        <h2>3. Decryption</h2>
-        <p>To decrypt the ciphertext:</p>
+        <h2>3. Дешифрование</h2>
+        <p>Чтобы расшифровать зашифрованный текст:</p>
         <ol>
-            <li>Split the ciphertext into chunks.</li>
-            <li>For each chunk, compute <code>plaintext = pow(chunk, d, n)</code>.</li>
-            <li>Convert the plaintext back into bytes and decode it into a string.</li>
+            <li>Разделите зашифрованный текст на части.</li>
+            <li>Для каждой части вычислите <code>plaintext = pow(chunk, d, n)</code>.</li>
+            <li>Преобразуйте расшифрованный текст обратно в байты и декодируйте его в строку.</li>
         </ol>
     </div>
 </div>
