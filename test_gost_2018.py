@@ -1,14 +1,55 @@
 import hashlib
 import random
+import math
 
 
-def inverse_mod(k: int, p: int) -> int:
+def get_prime_divisors(n):
+    divisors = []
+    while n % 2 == 0:
+        divisors.append(2)
+        n //= 2
+    for divisor_cand in range(3, int(math.sqrt(n)) + 1, 2):
+        while n % divisor_cand == 0:
+            divisors.append(divisor_cand)
+            n //= divisor_cand
+    if n > 2:
+        divisors.append(n)
+    return list(set(divisors))
+
+
+def generate_primes(low_bound: int, high_bound: int) -> list:
+    if high_bound < 2:
+        return []
+
+    is_prime = [True] * (high_bound + 1)
+    is_prime[0] = is_prime[1] = False
+
+    for prime_cand in range(2, int(high_bound ** 0.5) + 1):
+        if is_prime[prime_cand]:
+            for idx in range(prime_cand * prime_cand, high_bound + 1, prime_cand):
+                is_prime[idx] = False
+
+    return [prime_num for prime_num, is_prime_flag in enumerate(is_prime) if is_prime_flag and prime_num >= low_bound]
+
+
+PRIMES = generate_primes(1000, 10_000)
+
+
+def get_random_prime():
+    return random.choice(PRIMES)
+
+
+def is_square(num) -> bool:
+    return num == math.floor(num ** .5) ** 2
+
+
+def inverse_mod(k: int, _p: int) -> int:
     """Compute the modular inverse of k modulo p.
         P MUST BE PRIME
     """
     if k == 0:
         raise ZeroDivisionError("Division by zero")
-    return pow(k, p - 2, p)
+    return pow(k, _p - 2, _p)
 
 
 def point_add(p1: tuple, p2: tuple) -> tuple:
@@ -22,15 +63,15 @@ def point_add(p1: tuple, p2: tuple) -> tuple:
     x2, y2 = p2
 
     if x1 == x2 and y1 != y2 or y1 == 0:
-        return None # нулевая точка "O": Q + O = O + Q = Q_1
+        return None  # нулевая точка "O": Q + O = O + Q = Q
 
     if x1 == x2:
-        m = (3 * x1 * x1 + a) * inverse_mod(2 * y1, p)
+        _m = (3 * x1 ** 2 + a) * inverse_mod(2 * y1, p)
     else:
-        m = (y2 - y1) * inverse_mod(x2 - x1, p)
+        _m = (y2 - y1) * inverse_mod(x2 - x1, p)
 
-    x3 = m * m - x1 - x2
-    y3 = m * (x1 - x3) - y1
+    x3 = _m ** 2 - x1 - x2
+    y3 = _m * (x1 - x3) - y1
 
     return (x3 % p, y3 % p)
 
@@ -45,34 +86,64 @@ def scalar_mult(k: int, point: tuple) -> tuple:
             result = point_add(result, addend)
         addend = point_add(addend, addend)
         k >>= 1
-        # result = point_add(result, addend)
-        # k -= 1
     return result
 
 
 def calc_J():
-    return 1728 * 4 * a ** 3 * inverse_mod(4 * a ** 3 + 27 * b ** 2, p)
+    return (1728 * 4 * a ** 3 * inverse_mod(4 * a ** 3 + 27 * b ** 2, p)) % p
 
 
 # Пример параметров (для обучения)
-p = 57896044618658097711785492504343953926634992332820282019728792003956564821041  # Модуль конечного поля
-a = 7    # Коэффициент a эллиптической кривой
-b = 43308876546767276905765904595650931995942111794451039583252968842033849580414    # Коэффициент b эллиптической кривой
+# p = 57896044618658097711785492504343953926634992332820282019728792003956564821041  # Модуль конечного поля
+# a = 7    # Коэффициент a эллиптической кривой
+# b = 43308876546767276905765904595650931995942111794451039583252968842033849580414    # Коэффициент b эллиптической кривой
+# while (4 * a ** 3 + 27 * b ** 2) % p == 0 or calc_J() in [0, 1728]:
+#     a, b = random.randint(1, 1000), random.randint(1, 1000)
+#
+# P_x = 2   # x-координата базовой точки P
+# P_y = 4018974056539037503335449422937059775635739389905545080690979365213431566280   # y-координата базовой точки P
+# q = 57896044618658097711785492504343953927082934583725450622380973592137631069619   # Порядок базовой точки P
+# P = (P_x, P_y)
+
+# Пример параметров (для обучения)
+p = get_random_prime()  # Модуль конечного поля
+if p <= 3: raise Exception('p <= 3')
+
+a = 0  # Коэффициент a эллиптической кривой
+b = 0  # Коэффициент b эллиптической кривой
 while (4 * a ** 3 + 27 * b ** 2) % p == 0 or calc_J() in [0, 1728]:
     a, b = random.randint(1, 1000), random.randint(1, 1000)
 
-P_x = 2   # x-координата базовой точки P
-P_y = 4018974056539037503335449422937059775635739389905545080690979365213431566280   # y-координата базовой точки P
-q = 57896044618658097711785492504343953927082934583725450622380973592137631069619   # Порядок базовой точки P
-P = (P_x, P_y)
+P_x = 0  # x-координата базовой точки P
+P_y = 0  # y-координата базовой точки P
+P = None
+m, q = None, None
 
-while scalar_mult(q, P) is not None: # check that qP = O
-    P_x = random.randint(1, 1000)
-    P_y = random.randint(1, 1000)
-    P = (P_x, P_y)
+while P is None:
+    m = random.randint(math.ceil(p + 1 - 2 * math.sqrt(p)), math.floor(p + 1 + 2 * math.sqrt(p)))
+    if m == p: continue
+    q = random.choice(get_prime_divisors(m))  # Порядок базовой точки P
+
+    for P_x in range(1, 2 * p):
+        P_y_squared = (P_x ** 3 + a * P_x + b) % p
+        if P_y_squared == 0:
+            continue
+        for _ in range(10):
+            if is_square(P_y_squared):
+                break
+            P_y_squared += p
+        if not is_square(P_y_squared):
+            continue
+
+        P = (P_x, int(P_y_squared ** .5))
+        if scalar_mult(q, P) is None and scalar_mult(1, P) is not None: # check that qP = O
+            break
+        P = None
+
+print(f"p={p}, a={a}, b={b}, m={m}, q={q}, P={P}, qP={scalar_mult(q, P)}, y_square={(P_x ** 3 + a * P_x + b) % p}")
 
 # Private key (example)
-d = 55441196065363246126355624130324183196576709222340016572108097750006097525544  # Private key (must be kept secret)
+d = random.randint(1, q - 1)  # Private key (must be kept secret)
 
 # Public key (example)
 Q = scalar_mult(d, P)  # Q = d * P
