@@ -3,6 +3,7 @@ from module_2814789 import *
 
 app = Flask(__name__)
 
+
 # Логика шифра Цезаря с промежуточными результатами
 def caesar_cipher_with_steps(text, shift):
     alphabet = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
@@ -31,6 +32,7 @@ def caesar_cipher_with_steps(text, shift):
 def index():
     return render_template('index.html')
 
+
 @app.route('/caesar', methods=['GET', 'POST'])
 def caesar():
     if request.method == 'POST':
@@ -47,9 +49,11 @@ def caesar():
         return jsonify({'steps': steps})
     return render_template('caesar.html')
 
+
 @app.route('/about-gost2814789')
 def about_gost28147():
     return render_template('about-gost2814789.html')
+
 
 @app.route('/gost2814789', methods=['GET', 'POST'])
 def gost2814789():
@@ -70,16 +74,27 @@ def aes():
     # Логика обработки AES
     return render_template('aes.html')
 
+
 @app.route('/rsa', methods=['GET', 'POST'])
 def rsa():
     # Логика обработки RSA
     return render_template('rsa.html')
+
 
 @app.route('/rsa_explanation', methods=['GET', 'POST'])
 def rsa_explanation():
     # Объяснение работы RSA
     return render_template('rsa_explanation.html')
 
+
+@app.route('/gost_34_10_2018', methods=['GET', 'POST'])
+def gost_34_10_2018():
+    return render_template('gost_34_10_2018.html')
+
+
+@app.route('/gost_34_10_2018_explanation', methods=['GET', 'POST'])
+def gost_34_10_2018_explanation():
+    return render_template('gost_34_10_2018_explanation.html')
 
 
 if __name__ == '__main__':
