@@ -1,13 +1,569 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Визуализация RSA</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        hr {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border: 0;
+            border-top: 2px solid rgba(0, 0, 0, 0.3);
+        }
+    </style>
 </head>
 <body>
-Dummy page
+<div class="container">
+    <h2 class="text-center">ГОСТ 34.10 2018</h2>
+
+    <a href="/gost_34_10_2018_explanation">Объяснение алгоритма</a>
+
+    <div class="row g-3 needs-validation justify-content-center">
+        <h3 class="text-center">Параметры алгоритма</h3>
+
+        <div class="col-md-4">
+            <label for="p" class="form-label">p:</label>
+            <input type="number" class="form-control" id="p" placeholder="Введите p">
+            <div class="invalid-feedback" id="p-error-message">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label for="a" class="form-label">a:</label>
+            <input type="number" class="form-control" id="a" placeholder="Введите a">
+            <div class="invalid-feedback" id="a-error-message">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label for="b" class="form-label">b:</label>
+            <input type="number" class="form-control" id="b" placeholder="Введите b">
+            <div class="invalid-feedback" id="b-error-message">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label for="m" class="form-label">m:</label>
+            <input type="number" class="form-control" id="m" placeholder="Введите m">
+            <div class="invalid-feedback" id="m-error-message">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label for="q" class="form-label">q:</label>
+            <input type="number" class="form-control" id="q" placeholder="Введите q">
+            <div class="invalid-feedback" id="q-error-message">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label for="P" class="form-label">P:</label>
+            <input type="text" class="form-control" id="P" placeholder="Введите P формат: x,y">
+            <div class="invalid-feedback" id="P-error-message">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label for="private_key" class="form-label">Private key:</label>
+            <input type="number" class="form-control" id="private_key" placeholder="Введите d">
+            <div class="invalid-feedback" id="private_key-error-message">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label for="public_key" class="form-label">Public key:</label>
+            <input type="number" class="form-control" id="public_key" placeholder="Введите Q">
+            <div class="invalid-feedback" id="public_key-error-message">
+            </div>
+        </div>
+
+        <div class="col-12 row justify-content-center mt-4">
+            <div class="col-4">
+                <button class="btn btn-secondary w-100" type="button" onclick="generateRandomParams()">Сгенерировать
+                    случайные параметры
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <hr/>
+
+    <h3 class="text-center">Подписать</h3>
+    <!-- Область ввода сообщения -->
+    <div class="d-flex mt-5 mb-3 w-100 row justify-content-center">
+        <div class="d-flex justify-content-center align-items-center col-12">
+            <label for="message" class="me-2">Сообщение:</label>
+            <input type="text" id="message" class="form-control me-2" value="test message" style="width: 300px;">
+            <button id="make_signature" class="btn btn-primary me-2">Подписать</button>
+        </div>
+
+        <div class="d-flex justify-content-center align-items-center col-12 mt-3">
+            <label for="make_signature_result"  class="me-2">Результат:</label>
+            <input type="text" class="form-control me-2" id="make_signature_result" readonly value="" placeholder="результат" style="width: 300px">
+        </div>
+    </div>
+
+
+    <hr/>
+
+    <h3 class="text-center">Проверить подпись</h3>
+    <!-- Область ввода сообщения -->
+    <div class="d-flex mt-5 mb-3 w-100 row justify-content-center">
+        <div class="d-flex justify-content-center align-items-center col-12">
+            <label for="message" class="me-2">Сообщение:</label>
+            <input type="text" id="message" class="form-control me-2" value="" placeholder="сообщение" style="width: 300px;">
+
+            <label for="signature" class="me-2">Подпись:</label>
+            <input type="text" id="signature" class="form-control me-2" placeholder="подпись" style="width: 300px;">
+
+        </div>
+        <div class="d-flex justify-content-center align-items-center col-4 mt-3">
+            <button id="verify_signature" class="btn btn-primary">Проверить подпись</button>
+        </div>
+
+        <div class="d-flex justify-content-center align-items-center col-12 mt-3">
+            <label for="verify_result"  class="me-2">Результат:</label>
+            <input type="text" class="form-control me-2" id="verify_result" readonly value="" placeholder="результат" style="width: 300px">
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS и зависимости -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+
+<script>
+    let correct_params = [];
+
+    async function fetchCorrectParams() {
+        correct_params = await fetch('/gost_params', {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'},
+        })
+            .then((response) => response.json())
+            .then((data) => data.params);
+        console.log('success', correct_params)
+    }
+
+    function chooseRandom(choices) {
+        let index = Math.floor(Math.random() * choices.length);
+        return choices[index];
+    }
+
+    function randInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // const crypto = require('crypto');
+
+    class MathUtils {
+        static PRIMES = [];
+
+        static getPrimeDivisors(num) {
+            const divisors = new Set();
+            while (num % 2 === 0) {
+                divisors.add(2);
+                num /= 2;
+            }
+            for (let divisorCand = 3; divisorCand <= Math.sqrt(num); divisorCand += 2) {
+                while (num % divisorCand === 0) {
+                    divisors.add(divisorCand);
+                    num /= divisorCand;
+                }
+            }
+            if (num > 2) {
+                divisors.add(num);
+            }
+            return Array.from(divisors);
+        }
+
+        static generatePrimes(lowBound, highBound) {
+            if (highBound < 2) return [];
+
+            const isPrime = new Array(highBound + 1).fill(true);
+            isPrime[0] = isPrime[1] = false;
+
+            for (let primeCand = 2; primeCand <= Math.sqrt(highBound); primeCand++) {
+                if (isPrime[primeCand]) {
+                    for (let idx = primeCand * primeCand; idx <= highBound; idx += primeCand) {
+                        isPrime[idx] = false;
+                    }
+                }
+            }
+
+            return Array.from(isPrime.entries())
+                .filter(([primeNum, isPrimeFlag]) => isPrimeFlag && primeNum >= lowBound)
+                .map(([primeNum]) => primeNum);
+        }
+
+        static getRandomPrime() {
+            return MathUtils.PRIMES[Math.floor(Math.random() * MathUtils.PRIMES.length)];
+        }
+
+        static isPrime(num) {
+            return MathUtils.PRIMES.includes(num);
+        }
+
+        static isSquare(num) {
+            return num === Math.floor(Math.sqrt(num)) ** 2;
+        }
+
+        static inverseMod(k, mod) {
+            if (k === 0) throw new Error("Division by zero");
+            return this.modPow(k, mod - 2, mod);
+        }
+
+        static modPow(base, exponent, mod) {
+            let result = 1;
+            base = base % mod;
+            while (exponent > 0) {
+                if (exponent % 2 === 1) {
+                    result = (result * base) % mod;
+                }
+                exponent = Math.floor(exponent / 2);
+                base = (base * base) % mod;
+            }
+            return result;
+        }
+    }
+
+    MathUtils.PRIMES = MathUtils.generatePrimes(1000, 10000);
+
+    class LinearAlgebra {
+        static ZERO_POINT = null;
+
+        constructor(a, b, p) {
+            this.a = a;
+            this.b = b;
+            this.p = p;
+        }
+
+        static isZeroPoint(point) {
+            return point === LinearAlgebra.ZERO_POINT;
+        }
+
+        pointAdd(point1, point2) {
+            if (LinearAlgebra.isZeroPoint(point1)) return point2;
+            if (LinearAlgebra.isZeroPoint(point2)) return point1;
+
+            const [x1, y1] = point1;
+            const [x2, y2] = point2;
+
+            if (x1 === x2 && y1 !== y2 || y1 === 0) {
+                return LinearAlgebra.ZERO_POINT;
+            }
+
+            let lambda;
+            if (x1 === x2) {
+                lambda = (3 * x1 ** 2 + this.a) * MathUtils.inverseMod(2 * y1, this.p);
+            } else {
+                lambda = (y2 - y1) * MathUtils.inverseMod(x2 - x1, this.p);
+            }
+
+            const x3 = lambda ** 2 - x1 - x2;
+            const y3 = lambda * (x1 - x3) - y1;
+
+            return [x3 % this.p, y3 % this.p];
+        }
+
+        scalarMult(k, point) {
+            let result = null;
+            let addend = point;
+
+            while (k > 0) {
+                if (k & 1) {
+                    result = this.pointAdd(result, addend);
+                }
+                addend = this.pointAdd(addend, addend);
+                k >>= 1;
+            }
+            return result;
+        }
+    }
+
+    class Params {
+        constructor() {
+            this.p = 0;
+            this.a = 0;
+            this.b = 0;
+            this.P = null;
+            this.m = null;
+            this.q = null;
+            this.private_key = null;
+            this.public_key = null;
+        }
+
+        static fromRawObject(obj) {
+            console.log(obj);
+            let params = new Params();
+            params.p = obj.p;
+            params.a = obj.a;
+            params.b = obj.b;
+            params.P = obj.P;
+            params.m = obj.m;
+            params.q = obj.q;
+            params.private_key = randInt(1, params.q - 1);
+            params.public_key = null; // todo scalar mul
+            return params;
+        }
+    }
+
+    let params;
+    fetchCorrectParams()
+        .then(() => generateRandomParams());
+
+    class GostHasher {
+        constructor(params) {
+            this.params = params;
+            this.algebra = new LinearAlgebra(params.a, params.b, params.p);
+        }
+
+        gostHash(message) {
+            const hash = crypto.createHash('sha256').update(message).digest('hex');
+            return parseInt(hash, 16);
+        }
+
+        signMessage(message) {
+            const hashValue = this.gostHash(message);
+            const e = this.getE(hashValue);
+
+            for (let trials = 0; trials < 100; trials++) {
+                const k = Math.floor(Math.random() * (this.params.q - 1)) + 1;
+                const C = this.algebra.scalarMult(k, this.params.P);
+                if (C === null) continue;
+
+                const [xC] = C;
+                const r = xC % this.params.q;
+                if (r === 0) continue;
+
+                const s = (r * this.params.privateKey + k * e) % this.params.q;
+                if (s === 0) continue;
+
+                return [r, s];
+            }
+            throw new Error('Cannot sign');
+        }
+
+        verifySignature(message, signature) {
+            const [r, s] = signature;
+
+            if (!(0 < r && r < this.params.q && 0 < s && s < this.params.q)) {
+                return false;
+            }
+
+            const hashValue = this.gostHash(message);
+            const e = this.getE(hashValue);
+            const v = MathUtils.inverseMod(e, this.params.q);
+            const [z1, z2] = this.getZ(r, s, v);
+            const C = this.getC(this.params.publicKey, z1, z2);
+            const [xC] = C;
+            const R = xC % this.params.q;
+
+            return R === r;
+        }
+
+        getC(publicKey, z1, z2) {
+            return this.algebra.pointAdd(
+                this.algebra.scalarMult(z1, this.params.P),
+                this.algebra.scalarMult(z2, publicKey)
+            );
+        }
+
+        getZ(r, s, v) {
+            const z1 = (s * v) % this.params.q;
+            const z2 = (-r * v) % this.params.q;
+            return [z1, z2];
+        }
+
+        getE(hashValue) {
+            let e = hashValue % this.params.q;
+            if (e === 0) e = 1;
+            return e;
+        }
+    }
+
+    const addErrorMessage = (inputId, message) => {
+        document.getElementById(inputId).classList.add('is-invalid');
+        document.getElementById(`${inputId}-error-message`).textContent = message;
+    }
+    const removeErrorMessage = (inputId) => {
+        document.getElementById(`${inputId}-error-message`).textContent = '';
+        document.getElementById(inputId).classList.remove('is-invalid');
+    }
+    const validateInputs = () => {
+        // todo
+        for (const inputId in params) {
+            removeErrorMessage(inputId);
+        }
+        if (!isPrime(p)) {
+            addErrorMessage('p', 'P должно быть простым числом');
+            return false;
+        }
+        if (!isPrime(q)) {
+            addErrorMessage('q', 'Q должно быть простым числом');
+            return false;
+        }
+        if (p === q) {
+            addErrorMessage('p', 'P и Q не должны быть равны');
+            addErrorMessage('q', 'P и Q не должны быть равны');
+            return false;
+        }
+        if (n !== p * q) {
+            addErrorMessage('n', 'N != P * Q');
+            return false;
+        }
+        if (phi !== (p - 1) * (q - 1)) {
+            addErrorMessage('phi', 'PHI != (P - 1) * (Q - 1)');
+            return false;
+        }
+        if (e >= phi || e <= 1) {
+            addErrorMessage('e', '1 < E < PHI');
+            return false;
+        }
+        if (gcd(phi, e) !== 1) {
+            addErrorMessage('e', 'gcd(E, PHI) != 1');
+            return false;
+        }
+        if (d >= n || e * d % phi !== 1) {
+            addErrorMessage('d', 'E * D != 1 (mod PHI). D не является обратным для E');
+            return false;
+        }
+        return true;
+    };
+
+    for (const inputId in params) {
+        let paramData = params[inputId];
+        const inputEl = document.getElementById(inputId);
+        inputEl.addEventListener('change', () => {
+            paramData.setter(inputEl.value);
+            validateInputs();
+        })
+    }
+
+    const generateRandomParams = () => {
+        params = Params.fromRawObject(chooseRandom(correct_params));
+
+        // validateInputs();
+        for (const [inputId, value] of Object.entries(params)) {
+            document.getElementById(inputId).value = value;
+            console.log([inputId, value]);
+        }
+    }
+
+    const makeResultMessage = (message, visualizationDiv) => {
+        const result = document.createElement('input');
+        result.value = message;
+        result.readOnly = true;
+        result.className = 'form-control mb-5';
+        result.id = 'result';
+
+        const label = document.createElement('label');
+        label.className = 'form-label';
+        label.htmlFor = 'result';
+        label.innerText = 'Результат:';
+        visualizationDiv.appendChild(label);
+        visualizationDiv.appendChild(result);
+    }
+
+    document.getElementById('make_signature').addEventListener('click', () => {
+        if (!validateInputs()) {
+            alert('Пожалуйста, введите корректные параметры');
+            return;
+        }
+
+        const message = document.getElementById('message').value;
+        const visualizationDiv = document.getElementById('visualization');
+        visualizationDiv.innerHTML = '<hr/> <h3 class="text-center">Результат</h3>';
+
+        if (!message) {
+            alert('Пожалуйста, введите сообщение для шифрования.');
+            return;
+        }
+
+        const {publicKey, _} = getGenerationKeyPair();
+
+        // Convert the message to a UTF-8 byte array
+        const encoder = new TextEncoder();
+        const messageBytes = encoder.encode(message);
+
+        // Create a table for visualization
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        table.appendChild(thead);
+        const tbody = document.createElement('tbody');
+        table.appendChild(tbody);
+
+        table.className += ' table table-striped';
+        const addRow = (table, rowElements, elType = 'td') => {
+            const row = document.createElement('tr');
+            rowElements.forEach(elementText => {
+                const rowEl = document.createElement(elType);
+                rowEl.textContent = elementText;
+                row.appendChild(rowEl);
+            });
+            table.appendChild(row);
+        }
+
+        const headers = ['#', 'Символ', 'Код символа', 'Exp = charInt ^ e', 'CipherChar = exp % n'];
+        addRow(thead, headers, 'th');
+
+        let encryptedMessage = '';
+
+        // Encrypt each byte and add rows to the table
+        for (let i = 0; i < messageBytes.length; i++) {
+            const byte = messageBytes[i];
+            const exp = BigInt(byte) ** BigInt(publicKey.e);
+            const cipherChar = exp % BigInt(publicKey.n);
+            const rowData = [i + 1, String.fromCharCode(byte), byte, exp.toString(), cipherChar.toString()];
+            addRow(tbody, rowData);
+            encryptedMessage += cipherChar.toString() + ' ';
+        }
+
+        // Display the encrypted message
+        makeResultMessage(encryptedMessage.trim(), visualizationDiv);
+
+        // Add the table to the visualization div
+        visualizationDiv.appendChild(table);
+    });
+
+    document.getElementById('verify_signature').addEventListener('click', () => {
+        if (!validateInputs()) {
+            alert('Пожалуйста, введите корректные параметры');
+            return;
+        }
+
+        const encryptedMessage = document.getElementById('message').value;
+        const encryptedBytes = encryptedMessage.split(' ').map((byte) => BigInt(byte));
+
+        const {_, privateKey} = getGenerationKeyPair();
+        const {n, d} = privateKey;
+
+        // Decrypt each byte
+        let decryptedBytes = [];
+        for (const encryptedByte of encryptedBytes) {
+            const decryptedByte = Number(encryptedByte ** BigInt(d) % BigInt(n));
+            decryptedBytes.push(decryptedByte);
+        }
+
+        // Convert the byte array back to a string
+        const decoder = new TextDecoder('utf-8');
+        const decryptedMessage = decoder.decode(new Uint8Array(decryptedBytes));
+
+        const visualizationDiv = document.getElementById('visualization');
+        visualizationDiv.innerHTML = '<hr/> <h3 class="text-center">Результат</h3>';
+
+        makeResultMessage(decryptedMessage, visualizationDiv);
+    });
+</script>
 </body>
 </html>

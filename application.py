@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from module_2814789 import *
 
 app = Flask(__name__)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 
 # Логика шифра Цезаря с промежуточными результатами
