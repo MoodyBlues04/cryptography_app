@@ -26,12 +26,13 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
-        .code {
+        code {
             background: #f4f4f4;
-            padding: 10px;
+            padding: 1px;
             border-radius: 5px;
             font-family: "Courier New", monospace;
             overflow-x: auto;
+            font-size: 90%;
         }
 
         .step {
@@ -47,12 +48,12 @@
 
     <div class="step">
         <h2>1. Генерация ключей</h2>
-        <p>Ключи RSA генерируются с использованием двух больших простых чисел (<code>p</code> и <code>q</code>).</p>
+        <p>Ключи RSA генерируются с использованием двух различных больших простых чисел (<code><strong>p</strong></code> и <code><strong>q</strong></code>).</p>
         <ul>
             <li><strong>Модуль (<code>n</code>)</strong>: <code>n = p * q</code></li>
             <li><strong>Функция Эйлера (<code>phi</code>)</strong>: <code>phi = (p - 1) * (q - 1)</code></li>
-            <li><strong>Публичный ключ (<code>e</code>)</strong>: Число, взаимно простое с <code>phi</code>.</li>
-            <li><strong>Приватный ключ (<code>d</code>)</strong>: Модульное обратное число для <code>e</code> по модулю <code>phi</code>.</li>
+            <li><strong>Публичный ключ (<code>e</code>)</strong>: Число, взаимно простое с <code>phi</code>, <code>1 < e < phi</code></li>
+            <li><strong>Приватный ключ (<code>d</code>)</strong>: Обратное для <code>e</code> по модулю <code>phi</code>. То есть: <code>d * e = 1 (mod phi)</code></li>
         </ul>
     </div>
 
