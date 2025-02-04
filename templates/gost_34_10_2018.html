@@ -193,9 +193,7 @@
         document.getElementById(inputId).classList.remove('is-invalid');
     }
 
-    // todo setters for params for user-input
     const validateInputs = async () => {
-        // todo remove errors for all inputs
         const validationErrors = await fetch('/gost_validate_params', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -207,12 +205,17 @@
                 return data.errors;
             });
 
-        for (const err of validationErrors) {
-            const {key, error} = err;
-            addErrorMessage(key, error);
+        for (const key in params) {
+            removeErrorMessage(key);
         }
+        for (const err of validationErrors) {
+            const {key, message} = err;
+            addErrorMessage(key, message);
+        }
+        return validationErrors.length === 0;
     };
 
+    // todo setters for params for user-input
     //for (const inputId in params) {
     //    let paramData = params[inputId];
     //    const inputEl = document.getElementById(inputId);
@@ -228,7 +231,6 @@
     const generateRandomParams = () => {
         params = Params.fromRawObject(chooseRandom(correct_params));
 
-        // todo
         validateInputs();
         for (const [inputId, value] of Object.entries(params)) {
             document.getElementById(inputId).value = value;
@@ -240,7 +242,7 @@
         return await fetch('/gost_make_signature', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({message: message}),
+            body: JSON.stringify({message: message, params: params}),
         })
             .then((response) => response.json())
             .then((data) => data.signature);
@@ -250,18 +252,17 @@
         return await fetch('/gost_verify_signature', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({message: message, signature: signature}),
+            body: JSON.stringify({message: message, signature: signature, params: params}),
         })
             .then((response) => response.json())
             .then((data) => data.is_valid);
     }
 
     document.getElementById('make_signature').addEventListener('click', async () => {
-        // todo
-        //if (!validateInputs()) {
-        //    alert('Пожалуйста, введите корректные параметры');
-        //    return;
-        //}
+        if (!await validateInputs()) {
+            alert('Пожалуйста, введите корректные параметры');
+            return;
+        }
 
         const message = document.getElementById('message_to_sign').value;
         if (!message) {
@@ -274,11 +275,10 @@
     });
 
     document.getElementById('verify_signature').addEventListener('click', async () => {
-        // todo
-        //if (!validateInputs()) {
-        //    alert('Пожалуйста, введите корректные параметры');
-        //    return;
-        //}
+        if (! await validateInputs()) {
+            alert('Пожалуйста, введите корректные параметры');
+            return;
+        }
 
         const message = document.getElementById('message_to_verify').value;
         const signature = document.getElementById('signature').value;

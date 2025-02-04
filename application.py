@@ -157,5 +157,42 @@ def gost_validate_params():
     return jsonify({'errors': validate_params(params)})
 
 
+@app.route('/gost_make_signature', methods=['GET', 'POST'])
+def gost_make_signature():
+    data = request.json
+    raw_params = data.get('params', '')
+
+    errors = validate_params(raw_params)
+    if len(errors):
+        return jsonify({'errors': errors})
+
+    params = Params.from_dict(raw_params)
+    message = data.get('message', None)
+    if message is None:
+        return jsonify({'errors': ['message is empty']})
+
+    hasher = GostHasher(params)
+    return jsonify({'signature': hasher.sign_message(message)})
+
+
+@app.route('/gost_verify_signature', methods=['GET', 'POST'])
+def gost_verify_signature():
+    data = request.json
+    raw_params = data.get('params', '')
+
+    errors = validate_params(raw_params)
+    if len(errors):
+        return jsonify({'errors': errors})
+
+    params = Params.from_dict(raw_params)
+    message = data.get('message', None)
+    signature = data.get('signature', None)
+    if message is None or signature is None:
+        return jsonify({'errors': ['message or signature is empty']})
+    signature = tuple(map(int, signature.split(',')))
+    hasher = GostHasher(params)
+    return jsonify({'is_valid': hasher.verify_signature(message, signature)})
+
+
 if __name__ == '__main__':
     app.run(debug=True)
