@@ -42,7 +42,13 @@ class Math:
 
     @classmethod
     def is_prime(cls, num: int) -> bool:
-        return num in cls.PRIMES
+        if num <= 1: return False
+        if num <= 3: return True
+        if num % 2 == 0 or num % 3 == 0: return False
+        for i in range(5, int(math.sqrt(num)) + 1, 6):
+            if num % i == 0 or num % (i + 2) == 0:
+                return False
+        return True
 
     @classmethod
     def is_square(cls, num: int) -> bool:
@@ -104,19 +110,6 @@ class LinearAlgebra:
         return result
 
 
-# Пример параметров (для обучения)
-# p = 57896044618658097711785492504343953926634992332820282019728792003956564821041  # Модуль конечного поля
-# a = 7    # Коэффициент a эллиптической кривой
-# b = 43308876546767276905765904595650931995942111794451039583252968842033849580414    # Коэффициент b эллиптической кривой
-# while (4 * a ** 3 + 27 * b ** 2) % p == 0 or calc_J() in [0, 1728]:
-#     a, b = random.randint(1, 1000), random.randint(1, 1000)
-#
-# P_x = 2   # x-координата базовой точки P
-# P_y = 4018974056539037503335449422937059775635739389905545080690979365213431566280   # y-координата базовой точки P
-# q = 57896044618658097711785492504343953927082934583725450622380973592137631069619   # Порядок базовой точки P
-# P = (P_x, P_y)
-
-# Пример параметров (для обучения)
 class Params:
     p = 0
     a, b = 0, 0
@@ -128,6 +121,24 @@ class Params:
 
     def __str__(self):
         return f"p={self.p}, (a, b)=({self.a}, {self.b}), P={self.P}, m={self.m}, q={self.q}"
+
+    @classmethod
+    def from_dict(cls, raw_params: dict):
+        params = Params()
+        params.p = raw_params.get('p')
+        params.a = raw_params.get('a')
+        params.b = raw_params.get('b')
+        params.P = raw_params.get('P')
+        params.m = raw_params.get('m')
+        params.q = raw_params.get('q')
+        params.private_key = raw_params.get('private_key', random.randint(1, params.q - 1))
+        algebra: LinearAlgebra = LinearAlgebra(params.a, params.b, params.p)
+        params.public_key = raw_params.get('public_key', algebra.scalar_mult(params.private_key, params.P))
+        return params
+
+
+def calc_j(a: int, b: int, p: int) -> int:
+    return (1728 * 4 * a ** 3 * Math.inverse_mod(4 * a ** 3 + 27 * b ** 2, p)) % p
 
 
 class ParamsGenerator:
@@ -141,8 +152,6 @@ class ParamsGenerator:
         self.__algebra: LinearAlgebra = LinearAlgebra(self.__params.a, self.__params.b, self.__params.p)
 
         self.__generate_base_elips_point()
-        self.__params.d = random.randint(1, self.__params.q - 1)
-        self.__params.Q = self.__algebra.scalar_mult(self.__params.d, self.__params.P)  # Q = d * P
         self.__params.private_key = random.randint(1, self.__params.q - 1)
         self.__params.public_key = self.__algebra.scalar_mult(self.__params.private_key, self.__params.P)
         return self.__params
@@ -190,13 +199,9 @@ class ParamsGenerator:
 
     def __generate_elips_params(self) -> None:
         a, b = 0, 0
-        while (4 * a ** 3 + 27 * b ** 2) % self.__params.p == 0 or self.__calc_j(a, b) in [0, 1728]:
+        while (4 * a ** 3 + 27 * b ** 2) % self.__params.p == 0 or calc_j(a, b, self.__params.p) in [0, 1728]:
             a, b = random.randint(1, 1000), random.randint(1, 1000)
         self.__params.a, self.__params.b = a, b
-
-    def __calc_j(self, a: int, b: int) -> int:
-        p = self.__params.p
-        return (1728 * 4 * a ** 3 * Math.inverse_mod(4 * a ** 3 + 27 * b ** 2, p)) % p
 
 
 class GostHasher:
@@ -290,31 +295,41 @@ class GostHasher:
         return e
 
 
-def test_params(hasher: GostHasher) -> bool:
-    message = "Hello, world!"
-    try:
-        for i in range(100):
-            if i % 10 == 0:
-                print(f"running test: {i}")
-            # Step 1: Sign the message
-            signature = hasher.sign_message(message)
+def validate_params(raw_params: dict):
+    errors = []
+    params = Params.from_dict(raw_params)
+    if params.p is None: return errors
+    if not Math.is_prime(params.p):
+        errors.append({'key': 'p', 'message': 'P must be prime'})
+    if params.a is None or params.b is None: return errors
+    if (4 * params.a ** 3 + 27 * params.b ** 2) % params.p == 0 or calc_j(params.a, params.b, params.p) in [0, 1728]:
+        msg = 'a and b defines incorrect elips curve'
+        errors.append({'key': 'a', 'message': msg})
+        errors.append({'key': 'b', 'message': msg})
 
-            # Step 2: Verify the signature
-            if not hasher.verify_signature(message, signature):
-                return False
-        return True
-    except Exception as e:
-        print(f"Error: {e.__str__()}")
-        return False
+    if params.m is None: return errors
+    if not (math.ceil(params.p + 1 - 2 * math.sqrt(params.p)) <= params.m <= math.floor(params.p + 1 + 2 * math.sqrt(params.p))):
+        errors.append({'key': 'm', 'message': 'M must fit: p + 1 - 2 * sqrt(p) <= m <= p + 1 + 2 * sqrt(p)'})
+    if params.q is None: return errors
+    if not Math.is_prime(params.q) or params.m % params.q != 0:
+        errors.append({'key': 'q', 'message': 'q must be a prime divisor of m'})
 
+    if params.P is None: return errors
+    P_x, P_y = params.P
+    if (P_y ** 2) % params.p != (P_x ** 3 + P_x * params.a + params.b) % params.p:
+        errors.append({'key': 'P', 'message': 'P must be a dot on elips curve'})
+    linear_alg = LinearAlgebra(params.a, params.b, params.p)
+    if linear_alg.scalar_mult(params.q, params.P) is not None:
+        errors.append({'key': 'P', 'message': 'qP != O'})
+    if linear_alg.scalar_mult(1, params.P) is None:
+        errors.append({'key': 'P', 'message': 'P == O'})
 
-if __name__ == '__main__':
-    cool_params = []
-    for i in range(100):
-        print(i)
-        params = ParamsGenerator().generate_params()
-        hasher = GostHasher(params)
-        if test_params(hasher):
-            cool_params.append(params.__str__())
+    if params.private_key is None: return errors
+    if not (1 <= params.private_key < params.q):
+        errors.append({'key': 'private_key', 'message': 'Private key must fit: 1 <= key < q'})
+    expected = linear_alg.scalar_mult(params.private_key, params.P)
+    if params.public_key is None: return errors
+    if params.public_key[0] != expected[0] or params.public_key[1] != expected[1]:
+        errors.append({'key': 'public_key', 'message': 'public_key != private_key * P'})
 
-    print(*cool_params)
+    return errors

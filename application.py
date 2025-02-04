@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from module_2814789 import *
+from module_gost_34_10_2018.gost_2018 import *
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -141,8 +142,19 @@ def gost_params():
         {'p': 3041, 'a': 880, 'b': 226, 'P': (83, 19), 'm': 2972, 'q': 743},
         {'p': 8263, 'a': 848, 'b': 769, 'P': (356, 85), 'm': 8305, 'q': 11},
     ]
-    return jsonify({'params': params})
+    def make_extended_params(raw_param):
+        obj_param = Params.from_dict(raw_param)
+        raw_param['private_key'] = obj_param.private_key
+        raw_param['public_key'] = obj_param.public_key
+        return raw_param
+    return jsonify({'params': list(map(make_extended_params, params))})
 
+
+@app.route('/gost_validate_params', methods=['GET', 'POST'])
+def gost_validate_params():
+    data = request.json
+    params = data.get('params', '')
+    return jsonify({'errors': validate_params(params)})
 
 
 if __name__ == '__main__':
