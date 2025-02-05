@@ -317,7 +317,7 @@ def validate_params(raw_params: dict):
         errors.append({'key': 'm', 'message': 'M должно удовлетворять: p + 1 - 2 * sqrt(p) <= m <= p + 1 + 2 * sqrt(p)'})
     if params.q is None: return errors
     if not Math.is_prime(params.q) or params.m % params.q != 0:
-        errors.append({'key': 'q', 'message': 'q должно быть простым делитлем m'})
+        errors.append({'key': 'q', 'message': 'q должно быть простым делителем m'})
 
     if params.P is None: return errors
     P_x, P_y = params.P
