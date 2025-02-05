@@ -154,7 +154,12 @@ def gost_params():
 def gost_validate_params():
     data = request.json
     params = data.get('params', '')
-    return jsonify({'errors': validate_params(params)})
+    print(params)
+    try:
+        errors = validate_params(params)
+    except Exception as e:
+        errors = [{'key': 'server_error', 'message': e.__str__()}]
+    return jsonify({'errors': errors})
 
 
 @app.route('/gost_make_signature', methods=['GET', 'POST'])
@@ -189,6 +194,7 @@ def gost_verify_signature():
     signature = data.get('signature', None)
     if message is None or signature is None:
         return jsonify({'errors': ['message or signature is empty']})
+
     signature = tuple(map(int, signature.split(',')))
     hasher = GostHasher(params)
     return jsonify({'is_valid': hasher.verify_signature(message, signature)})

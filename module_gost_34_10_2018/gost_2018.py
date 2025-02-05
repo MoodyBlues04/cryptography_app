@@ -125,16 +125,21 @@ class Params:
     @classmethod
     def from_dict(cls, raw_params: dict):
         params = Params()
-        params.p = raw_params.get('p')
-        params.a = raw_params.get('a')
-        params.b = raw_params.get('b')
+        params.p = cls.to_int_if_not_empty(raw_params.get('p'))
+        params.a = cls.to_int_if_not_empty(raw_params.get('a'))
+        params.b = cls.to_int_if_not_empty(raw_params.get('b'))
         params.P = raw_params.get('P')
-        params.m = raw_params.get('m')
-        params.q = raw_params.get('q')
-        params.private_key = raw_params.get('private_key', random.randint(1, params.q - 1))
+        if params.P is not None: params.P = (int(params.P[0]), int(params.P[1]))
+        params.m = cls.to_int_if_not_empty(raw_params.get('m'))
+        params.q = cls.to_int_if_not_empty(raw_params.get('q'))
+        params.private_key = cls.to_int_if_not_empty(raw_params.get('private_key', random.randint(1, params.q - 1) if params.q else None))
         algebra: LinearAlgebra = LinearAlgebra(params.a, params.b, params.p)
-        params.public_key = raw_params.get('public_key', algebra.scalar_mult(params.private_key, params.P))
+        params.public_key = raw_params.get('public_key', algebra.scalar_mult(params.private_key, params.P) if params.private_key and params.P else None)
         return params
+
+    @classmethod
+    def to_int_if_not_empty(cls, val) -> int | None:
+        return val if val is None else int(val)
 
 
 def calc_j(a: int, b: int, p: int) -> int:

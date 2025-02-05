@@ -210,20 +210,38 @@
         }
         for (const err of validationErrors) {
             const {key, message} = err;
+            if (key === 'server_error') {
+                alert(`Validation error: ${message}`);
+                return false;
+            }
             addErrorMessage(key, message);
         }
         return validationErrors.length === 0;
     };
 
-    // todo setters for params for user-input
-    //for (const inputId in params) {
-    //    let paramData = params[inputId];
-    //    const inputEl = document.getElementById(inputId);
-    //    inputEl.addEventListener('change', () => {
-    //        paramData.setter(inputEl.value);
-    //        validateInputs();
-    //    })
-    //}
+    for (const inputId in (new Params())) {
+        const inputEl = document.getElementById(inputId);
+        inputEl.addEventListener('change', () => {
+            let value;
+            if (inputId !== 'P' && inputId !== 'public_key') {
+                value = parseInt(inputEl.value);
+                if (isNaN(value)) {
+                    addErrorMessage(inputId, `${inputId} must be a correct number`);
+                    return;
+                }
+            } else {
+                value = inputEl.value;
+                if (!/^[0-9]+,[0-9]+$/.test(value)) {
+                    addErrorMessage(inputId, `${inputId} must be a pair of numbers. Example: 123,456`);
+                    return;
+                }
+                value = value.split(',').map((num) => parseInt(num));
+            }
+            console.log(inputId, value, params);
+            params[inputId] = value;
+            validateInputs();
+        })
+    }
 
     let params;
     fetchCorrectParams().then(() => generateRandomParams());
