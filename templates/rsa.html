@@ -126,7 +126,6 @@
         return a;
     }
 
-    // todo enter in form
     // такой маленький диапазон только ввиду учебных целей проекта
     const LOW_PRIME_BOUND = 0;
     const HIGH_PRIME_BOUND = 3_000;
@@ -356,6 +355,10 @@
         }
 
         const encryptedMessage = document.getElementById('message').value;
+        if (!/^[0-9]+( [0-9]+)*$/.test(encryptedMessage)) {
+            alert('Введите зашифрованное сообщение в указанном формате. Пример: "123 456 789"');
+            return;
+        }
         const encryptedBytes = encryptedMessage.split(' ').map((byte) => BigInt(byte));
 
         const {_, privateKey} = getGenerationKeyPair();
