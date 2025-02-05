@@ -132,7 +132,7 @@ class Params:
         if params.P is not None: params.P = (int(params.P[0]), int(params.P[1]))
         params.m = cls.to_int_if_not_empty(raw_params.get('m'))
         params.q = cls.to_int_if_not_empty(raw_params.get('q'))
-        params.private_key = cls.to_int_if_not_empty(raw_params.get('private_key', random.randint(1, params.q - 1) if params.q else None))
+        params.private_key = cls.to_int_if_not_empty(raw_params.get('private_key', random.randint(1, params.q - 1) if params.q and params.q > 1 else None))
         algebra: LinearAlgebra = LinearAlgebra(params.a, params.b, params.p)
         params.public_key = raw_params.get('public_key', algebra.scalar_mult(params.private_key, params.P) if params.private_key and params.P else None)
         return params

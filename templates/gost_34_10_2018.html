@@ -150,7 +150,6 @@
         })
             .then((response) => response.json())
             .then((data) => data.params);
-        console.log('success', correct_params)
     }
 
     function chooseRandom(choices) {
@@ -201,7 +200,6 @@
         })
             .then((response) => response.json())
             .then((data) => {
-                console.log(data.errors);
                 return data.errors;
             });
 
@@ -239,7 +237,6 @@
                 }
                 value = value.split(',').map((num) => parseInt(num));
             }
-            console.log(inputId, value, params);
             params[inputId] = value;
             validateInputs();
         })
