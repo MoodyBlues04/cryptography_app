@@ -305,24 +305,24 @@ def validate_params(raw_params: dict):
     params = Params.from_dict(raw_params)
     if params.p is None: return errors
     if not Math.is_prime(params.p):
-        errors.append({'key': 'p', 'message': 'P must be prime'})
+        errors.append({'key': 'p', 'message': 'P должно быть простым числом'})
     if params.a is None or params.b is None: return errors
     if (4 * params.a ** 3 + 27 * params.b ** 2) % params.p == 0 or calc_j(params.a, params.b, params.p) in [0, 1728]:
-        msg = 'a and b defines incorrect elips curve'
+        msg = 'a и b задают некорректную кривую'
         errors.append({'key': 'a', 'message': msg})
         errors.append({'key': 'b', 'message': msg})
 
     if params.m is None: return errors
     if not (math.ceil(params.p + 1 - 2 * math.sqrt(params.p)) <= params.m <= math.floor(params.p + 1 + 2 * math.sqrt(params.p))):
-        errors.append({'key': 'm', 'message': 'M must fit: p + 1 - 2 * sqrt(p) <= m <= p + 1 + 2 * sqrt(p)'})
+        errors.append({'key': 'm', 'message': 'M должно удовлетворять: p + 1 - 2 * sqrt(p) <= m <= p + 1 + 2 * sqrt(p)'})
     if params.q is None: return errors
     if not Math.is_prime(params.q) or params.m % params.q != 0:
-        errors.append({'key': 'q', 'message': 'q must be a prime divisor of m'})
+        errors.append({'key': 'q', 'message': 'q должно быть простым делитлем m'})
 
     if params.P is None: return errors
     P_x, P_y = params.P
     if (P_y ** 2) % params.p != (P_x ** 3 + P_x * params.a + params.b) % params.p:
-        errors.append({'key': 'P', 'message': 'P must be a dot on elips curve'})
+        errors.append({'key': 'P', 'message': 'P должно быть точкой на кривой'})
     linear_alg = LinearAlgebra(params.a, params.b, params.p)
     if linear_alg.scalar_mult(params.q, params.P) is not None:
         errors.append({'key': 'P', 'message': 'qP != O'})
@@ -331,7 +331,7 @@ def validate_params(raw_params: dict):
 
     if params.private_key is None: return errors
     if not (1 <= params.private_key < params.q):
-        errors.append({'key': 'private_key', 'message': 'Private key must fit: 1 <= key < q'})
+        errors.append({'key': 'private_key', 'message': 'private_key должен удовлетворять: 1 <= key < q'})
     expected = linear_alg.scalar_mult(params.private_key, params.P)
     if params.public_key is None: return errors
     if params.public_key[0] != expected[0] or params.public_key[1] != expected[1]:

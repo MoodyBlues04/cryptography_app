@@ -211,13 +211,15 @@
         for (const err of validationErrors) {
             const {key, message} = err;
             if (key === 'server_error') {
-                alert(`Validation error: ${message}`);
+                alert(`Ошибка валидации: ${message}`);
                 return false;
             }
             addErrorMessage(key, message);
         }
         return validationErrors.length === 0;
     };
+
+    const isPairOfNumbers = (str) => /^[0-9]+,[0-9]+$/.test(str);
 
     for (const inputId in (new Params())) {
         const inputEl = document.getElementById(inputId);
@@ -226,13 +228,13 @@
             if (inputId !== 'P' && inputId !== 'public_key') {
                 value = parseInt(inputEl.value);
                 if (isNaN(value)) {
-                    addErrorMessage(inputId, `${inputId} must be a correct number`);
+                    addErrorMessage(inputId, `Поле ${inputId} должно быть корректным числом`);
                     return;
                 }
             } else {
                 value = inputEl.value;
-                if (!/^[0-9]+,[0-9]+$/.test(value)) {
-                    addErrorMessage(inputId, `${inputId} must be a pair of numbers. Example: 123,456`);
+                if (!isPairOfNumbers(value)) {
+                    addErrorMessage(inputId, `Поле ${inputId} должно быть парой чисел. Пример: 123,456`);
                     return;
                 }
                 value = value.split(',').map((num) => parseInt(num));
@@ -252,7 +254,6 @@
         validateInputs();
         for (const [inputId, value] of Object.entries(params)) {
             document.getElementById(inputId).value = value;
-            console.log([inputId, value]);
         }
     }
 
@@ -303,6 +304,10 @@
 
         if (!message || !signature) {
             alert('Пожалуйста, введите сообщение для подписания.');
+            return;
+        }
+        if (!isPairOfNumbers(signature)) {
+            alert('Подпись - это пара натуральных чисел. Пример: 123,45');
             return;
         }
 
