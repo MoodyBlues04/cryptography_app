@@ -162,42 +162,24 @@
     }
 
     function getGenerationKeyPair() {
-        return {publicKey: {n: n, e: e}, privateKey: {n: n, d: Number(d)}};
+        return {
+            publicKey: {n: Number(params.n), e: Number(params.e)},
+            privateKey: {n: Number(params.n), d: Number(params.d)}
+        };
     }
 
-    let p, q, phi, n, e, d;
-    let params = {
-        'p': {
-            setter: (val) => {
-                p = Number(val);
-            }
-        },
-        'q': {
-            setter: (val) => {
-                q = Number(val);
-            }
-        },
-        'phi': {
-            setter: (val) => {
-                phi = Number(val);
-            }
-        },
-        'n': {
-            setter: (val) => {
-                n = Number(val);
-            }
-        },
-        'e': {
-            setter: (val) => {
-                e = Number(val);
-            }
-        },
-        'd': {
-            setter: (val) => {
-                d = Number(val);
-            }
-        },
-    };
+    class Params {
+        constructor() {
+            this.p = null;
+            this.q = null;
+            this.phi = null;
+            this.n = null;
+            this.e = null;
+            this.d = null;
+        }
+    }
+
+    let params = new Params();
 
     const addErrorMessage = (inputId, message) => {
         document.getElementById(inputId).classList.add('is-invalid');
@@ -211,36 +193,36 @@
         for (const inputId in params) {
             removeErrorMessage(inputId);
         }
-        if (!isPrime(p)) {
+        if (!isPrime(params.p)) {
             addErrorMessage('p', 'P должно быть простым числом');
             return false;
         }
-        if (!isPrime(q)) {
+        if (!isPrime(params.q)) {
             addErrorMessage('q', 'Q должно быть простым числом');
             return false;
         }
-        if (p === q) {
+        if (params.p === params.q) {
             addErrorMessage('p', 'P и Q не должны быть равны');
             addErrorMessage('q', 'P и Q не должны быть равны');
             return false;
         }
-        if (n !== p * q) {
+        if (params.n !== params.p * params.q) {
             addErrorMessage('n', 'N != P * Q');
             return false;
         }
-        if (phi !== (p - 1) * (q - 1)) {
+        if (params.phi !== (params.p - 1) * (params.q - 1)) {
             addErrorMessage('phi', 'PHI != (P - 1) * (Q - 1)');
             return false;
         }
-        if (e >= phi || e <= 1) {
+        if (params.e >= params.phi || params.e <= 1) {
             addErrorMessage('e', '1 < E < PHI');
             return false;
         }
-        if (gcd(phi, e) !== 1) {
+        if (gcd(params.phi, params.e) !== 1) {
             addErrorMessage('e', 'gcd(E, PHI) != 1');
             return false;
         }
-        if (d >= n || e * d % phi !== 1) {
+        if (params.d >= params.n || params.e * params.d % params.phi !== 1) {
             addErrorMessage('d', 'E * D != 1 (mod PHI). D не является обратным для E');
             return false;
         }
@@ -248,29 +230,28 @@
     };
 
     for (const inputId in params) {
-        let paramData = params[inputId];
         const inputEl = document.getElementById(inputId);
         inputEl.addEventListener('change', () => {
-            paramData.setter(inputEl.value);
+            params[inputId] = inputEl.value;
             validateInputs();
         })
     }
 
     const generateRandomParams = () => {
-        p = Number(getRandomPrime());
-        q = Number(0);
-        while (q === 0 || q === p) {
-            q = Number(getRandomPrime());
+        params.p = Number(getRandomPrime());
+        params.q = Number(0);
+        while (params.q === 0 || params.q === params.p) {
+            params.q = Number(getRandomPrime());
         }
 
-        n = p * q;
-        phi = (p - 1) * (q - 1);
-        e = findE(Number(phi));
-        d = modInverse(e, Number(phi));
+        params.n = params.p * params.q;
+        params.phi = (params.p - 1) * (params.q - 1);
+        params.e = findE(Number(params.phi));
+        params.d = modInverse(params.e, Number(params.phi));
 
         validateInputs();
         for (const inputId in params) {
-            document.getElementById(inputId).value = eval(inputId);
+            document.getElementById(inputId).value = params[inputId];
         }
     }
 
