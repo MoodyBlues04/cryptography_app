@@ -67,9 +67,13 @@
             </div>
         </div>
         <div class="col-md-4">
-            <label for="P" class="form-label">P:</label>
-            <input type="text" class="form-control" id="P" placeholder="Введите P формат: x,y">
-            <div class="invalid-feedback" id="P-error-message">
+            <label for="P_x" class="form-label">P:</label>
+            <div class="d-flex" style="flex-wrap: wrap">
+                <input type="number" class="form-control" style="width: 47%; margin-right: 5%" id="P_x"
+                       placeholder="Введите P_x">
+                <input type="number" class="form-control" style="width: 47%" id="P_y" placeholder="Введите P_y">
+                <div class="invalid-feedback" id="P-error-message">
+                </div>
             </div>
         </div>
         <div class="col-md-4">
@@ -79,9 +83,13 @@
             </div>
         </div>
         <div class="col-md-4">
-            <label for="public_key" class="form-label">Public key:</label>
-            <input type="text" class="form-control" id="public_key" placeholder="Введите Q">
-            <div class="invalid-feedback" id="public_key-error-message">
+            <label for="public_key_x" class="form-label">Public key:</label>
+            <div class="d-flex" style="flex-wrap: wrap">
+                <input type="number" class="form-control" style="width: 47%; margin-right: 5%" id="public_key_x"
+                       placeholder="Введите x">
+                <input type="number" class="form-control" style="width: 47%" id="public_key_y" placeholder="Введите y">
+                <div class="invalid-feedback" id="public_key-error-message">
+                </div>
             </div>
         </div>
 
@@ -97,17 +105,21 @@
     <hr/>
 
     <h3 class="text-center">Подписать</h3>
-    <!-- Область ввода сообщения -->
     <div class="d-flex mt-5 mb-3 w-100 row justify-content-center">
         <div class="d-flex justify-content-center align-items-center col-12">
             <label for="message_to_sign" class="me-2">Сообщение:</label>
-            <input type="text" id="message_to_sign" class="form-control me-2" value="test message" style="width: 300px;">
+            <input type="text" id="message_to_sign" class="form-control me-2" value="test message"
+                   style="width: 300px;">
             <button id="make_signature" class="btn btn-primary me-2">Подписать</button>
         </div>
 
         <div class="d-flex justify-content-center align-items-center col-12 mt-3">
-            <label for="make_signature_result"  class="me-2">Результат:</label>
-            <input type="text" class="form-control me-2" id="make_signature_result" readonly value="" placeholder="результат" style="width: 300px">
+            <label for="make_signature_result_x" class="me-2">Результат:</label>
+            <input type="number" class="form-control me-2" id="make_signature_result_x" readonly value=""
+                   placeholder="подпись: r" style="width: 150px">
+            <input type="number" class="form-control me-2" id="make_signature_result_y" readonly value=""
+                   placeholder="подпись: s" style="width: 150px">
+            <button class="btn btn-secondary" id="cp_to_verify">Проверить</button>
         </div>
     </div>
 
@@ -115,14 +127,15 @@
     <hr/>
 
     <h3 class="text-center">Проверить подпись</h3>
-    <!-- Область ввода сообщения -->
     <div class="d-flex mt-5 mb-3 w-100 row justify-content-center">
         <div class="d-flex justify-content-center align-items-center col-12">
             <label for="message_to_verify" class="me-2">Сообщение:</label>
-            <input type="text" id="message_to_verify" class="form-control me-2" value="" placeholder="сообщение" style="width: 300px;">
+            <input type="text" id="message_to_verify" class="form-control me-2" value="" placeholder="сообщение"
+                   style="width: 300px;">
 
-            <label for="signature" class="me-2">Подпись:</label>
-            <input type="text" id="signature" class="form-control me-2" placeholder="подпись" style="width: 300px;">
+            <label for="signature_x" class="me-2">Подпись:</label>
+            <input type="number" id="signature_x" class="form-control me-2" placeholder="подпись r" style="width: 150px;">
+            <input type="number" id="signature_y" class="form-control me-2" placeholder="подпись s" style="width: 150px;">
 
         </div>
         <div class="d-flex justify-content-center align-items-center col-4 mt-3">
@@ -130,8 +143,9 @@
         </div>
 
         <div class="d-flex justify-content-center align-items-center col-12 mt-3">
-            <label for="verify_result"  class="me-2">Результат:</label>
-            <input type="text" class="form-control me-2" id="verify_result" readonly value="" placeholder="результат" style="width: 300px">
+            <label for="verify_result" class="me-2">Результат:</label>
+            <input type="text" class="form-control me-2" id="verify_result" readonly value="" placeholder="результат"
+                   style="width: 300px">
         </div>
     </div>
 </div>
@@ -186,11 +200,23 @@
     }
 
     const addErrorMessage = (inputId, message) => {
-        document.getElementById(inputId).classList.add('is-invalid');
         document.getElementById(`${inputId}-error-message`).textContent = message;
+        if (inputId === 'P' || inputId === 'public_key') {
+            const suffixes = ['_x', '_y'];
+            for (const suffix of suffixes)
+                document.getElementById(`${inputId}${suffix}`).classList.add('is-invalid');
+            return;
+        }
+        document.getElementById(inputId).classList.add('is-invalid');
     }
     const removeErrorMessage = (inputId) => {
         document.getElementById(`${inputId}-error-message`).textContent = '';
+        if (inputId === 'P' || inputId === 'public_key') {
+            const suffixes = ['_x', '_y'];
+            for (const suffix of suffixes)
+                document.getElementById(`${inputId}${suffix}`).classList.remove('is-invalid');
+            return;
+        }
         document.getElementById(inputId).classList.remove('is-invalid');
     }
 
@@ -219,30 +245,45 @@
         return validationErrors.length === 0;
     };
 
-    const isPairOfNumbers = (str) => /^[0-9]+,[0-9]+$/.test(str);
-
-    for (const inputId in (new Params())) {
-        const inputEl = document.getElementById(inputId);
-        inputEl.addEventListener('change', () => {
-            let value;
-            if (inputId !== 'P' && inputId !== 'public_key') {
-                value = parseInt(inputEl.value);
-                if (isNaN(value)) {
-                    addErrorMessage(inputId, `Поле ${inputId} должно быть корректным числом`);
-                    return;
-                }
-            } else {
-                value = inputEl.value;
-                if (!isPairOfNumbers(value)) {
-                    addErrorMessage(inputId, `Поле ${inputId} должно быть парой чисел. Пример: 123,456`);
-                    return;
-                }
-                value = value.split(',').map((num) => parseInt(num));
-            }
-            params[inputId] = value;
-            validateInputs();
-        })
+    const getIntValue = (raw_value, error_msg_el, message) => {
+        let value;
+        value = parseInt(raw_value);
+        if (isNaN(value)) {
+            addErrorMessage(error_msg_el, message);
+            return null;
+        }
+        return value;
     }
+    const addPairListener = (inputId, paramName, idx) => {
+        const element = document.getElementById(inputId);
+        element.addEventListener('change', () => {
+            const value = getIntValue(element.value, paramName, `Поле ${inputId} должно быть корректным числом`);
+            if (value === null) return;
+            params[paramName][idx] = value;
+            validateInputs();
+        });
+    }
+    const addEventListeners = () => {
+        for (const param_name in (new Params())) {
+            if (param_name === 'P' || param_name === 'public_key') {
+                continue;
+            }
+            const inputEl = document.getElementById(param_name);
+            inputEl.addEventListener('change', () => {
+                const value = getIntValue(inputEl.value, param_name, `Поле ${param_name} должно быть корректным числом`);
+                if (value === null) return;
+                params[param_name] = value;
+                validateInputs();
+            });
+        }
+
+        addPairListener('P_x', 'P', 0);
+        addPairListener('P_y', 'P', 1);
+        addPairListener('public_key_x', 'public_key', 0);
+        addPairListener('public_key_y', 'public_key', 1);
+    }
+
+    addEventListeners();
 
     let params;
     fetchCorrectParams().then(() => generateRandomParams());
@@ -252,8 +293,15 @@
 
         validateInputs();
         for (const [inputId, value] of Object.entries(params)) {
+            if (inputId === 'P' || inputId === 'public_key') {
+                continue;
+            }
             document.getElementById(inputId).value = value;
         }
+        document.getElementById('P_x').value = params.P[0];
+        document.getElementById('P_y').value = params.P[1];
+        document.getElementById('public_key_x').value = params.public_key[0];
+        document.getElementById('public_key_y').value = params.public_key[1];
     }
 
     async function fetchSignature(message) {
@@ -289,28 +337,34 @@
         }
 
         const signature = await fetchSignature(message);
-        document.getElementById('make_signature_result').value = signature;
+        document.getElementById('make_signature_result_x').value = signature[0];
+        document.getElementById('make_signature_result_y').value = signature[1];
+    });
+    document.getElementById('cp_to_verify').addEventListener('click', () => {
+        const message = document.getElementById('message_to_sign').value;
+        const signatureX = document.getElementById('make_signature_result_x').value;
+        const signatureY = document.getElementById('make_signature_result_y').value;
+        document.getElementById('message_to_verify').value = message;
+        document.getElementById('signature_x').value = signatureX;
+        document.getElementById('signature_y').value = signatureY;
     });
 
     document.getElementById('verify_signature').addEventListener('click', async () => {
-        if (! await validateInputs()) {
+        if (!await validateInputs()) {
             alert('Пожалуйста, введите корректные параметры');
             return;
         }
 
         const message = document.getElementById('message_to_verify').value;
-        const signature = document.getElementById('signature').value;
+        const signatureX = document.getElementById('signature_x').value;
+        const signatureY = document.getElementById('signature_y').value;
 
-        if (!message || !signature) {
-            alert('Пожалуйста, введите сообщение для подписания.');
-            return;
-        }
-        if (!isPairOfNumbers(signature)) {
-            alert('Подпись - это пара натуральных чисел. Пример: 123,45');
+        if (!message || !signatureX || !signatureY) {
+            alert('Пожалуйста, введите подпись и сообщение.');
             return;
         }
 
-        const is_valid = await fetchVerification(message, signature);
+        const is_valid = await fetchVerification(message, `${signatureX}, ${signatureY}`);
         document.getElementById('verify_result').value = is_valid ? 'Verified!' : 'Invalid';
     });
 </script>
