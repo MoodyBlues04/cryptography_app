@@ -365,7 +365,7 @@
         }
 
         const is_valid = await fetchVerification(message, `${signatureX}, ${signatureY}`);
-        document.getElementById('verify_result').value = is_valid ? 'Verified!' : 'Invalid';
+        document.getElementById('verify_result').value = is_valid ? 'Подпись подтверждена!' : 'Некорректная подпись';
     });
 </script>
 </body>
