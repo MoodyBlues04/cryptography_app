@@ -77,6 +77,11 @@ def aes():
     return render_template('aes.html')
 
 
+@app.route('/aes_explanation', methods=['GET', 'POST'])
+def aes_explanation():
+    return render_template('aes_explanation.html')
+
+
 @app.route('/rsa', methods=['GET', 'POST'])
 def rsa():
     # Логика обработки RSA
