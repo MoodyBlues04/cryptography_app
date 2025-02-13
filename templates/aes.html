@@ -1,14 +1,205 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>aes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Визуализация RSA</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        hr {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border: 0;
+            border-top: 2px solid rgba(0, 0, 0, 0.3);
+        }
+    </style>
 </head>
 <body>
-<h1>AES algo</h1>
-<a href="/aes_explanation">Explanation</a>
+<div class="container">
+    <h2 class="text-center">AES</h2>
+
+    <a href="/">Главная</a>
+    <br>
+    <a href="/aes_explanation">Объяснение алгоритма</a>
+
+    <div class="row g-3 needs-validation justify-content-center">
+        <h3 class="text-center">Параметры AES</h3>
+
+        <div class="col-4">
+            <label for="NB" class="form-label">NB:</label>
+            <input type="number" class="form-control" id="NB" readonly>
+        </div>
+        <div class="col-4">
+            <label for="NK" class="form-label">NK:</label>
+            <input type="number" class="form-control" id="NK" readonly>
+        </div>
+        <div class="col-4">
+            <label for="NR" class="form-label">NR:</label>
+            <input type="number" class="form-control" id="NR" readonly>
+        </div>
+        <div class="col-4">
+            <label for="BLOCK_SIZE" class="form-label">Block size:</label>
+            <input type="number" class="form-control" id="BLOCK_SIZE" readonly>
+        </div>
+
+    </div>
+
+    <hr/>
+
+    <h3 class="text-center">Сообщение</h3>
+
+    <div class="row g-3 needs-validation">
+        <div class="col-6 offset-2">
+            <label for="message" class="form-label">Сообщение:</label>
+            <input type="text" id="message" class="form-control" value="test message">
+        </div>
+        <div class="col-4 offset-2">
+            <label for="key" class="form-label">Ключ:</label>
+            <input type="text" id="key" class="form-control" value="Sixteen byte key">
+            <div class="invalid-feedback" id="key-error-message">
+                Длина ключа должна быть 16 байт
+            </div>
+        </div>
+        <div class="col-4">
+            <label for="bytes_cnt" class="form-label">Число байт в ключе:</label>
+            <input type="number" id="bytes_cnt" class="form-control" value="16" readonly>
+        </div>
+        <div class="col-5 offset-2">
+            <button id="encryptButton" class="btn btn-primary me-2">Зашифровать</button>
+            <button id="decryptButton" class="btn btn-primary">Расшифровать</button>
+        </div>
+    </div>
+    <div id="visualization" class="mt-4">
+    </div>
+</div>
+
+<!-- Bootstrap JS и зависимости -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+
+<script>
+    async function fetchParams() {
+        return await fetch('/aes_params', {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'},
+        })
+            .then((response) => response.json())
+            .then((data) => data.params);
+    }
+
+    async function fetchEncrypt(message, key) {
+        return await fetch('/aes_encrypt', {
+            method: 'POST',
+            body: JSON.stringify({message: message, key: key}),
+            headers: {'Content-Type': 'application/json'},
+        })
+            .then((response) => response.json())
+            .then((data) => data.result); // todo check for errors
+    }
+
+    async function fetchDecrypt(message, key) {
+        return await fetch('/aes_decrypt', {
+            method: 'POST',
+            body: JSON.stringify({message: message, key: key}),
+            headers: {'Content-Type': 'application/json'},
+        })
+            .then((response) => response.json())
+            .then((data) => data.result);
+    }
+
+    const makeResultMessage = (message, visualizationDiv) => {
+        const result = document.createElement('input');
+        result.value = message;
+        result.readOnly = true;
+        result.className = 'form-control mb-5';
+        result.id = 'result';
+
+        const label = document.createElement('label');
+        label.className = 'form-label';
+        label.htmlFor = 'result';
+        label.innerText = 'Результат:';
+        visualizationDiv.appendChild(label);
+        visualizationDiv.appendChild(result);
+    }
+
+    const validateInputs = () => {
+        if (Number(document.getElementById('bytes_cnt').value) !== 16) {
+            alert('Ошибка: длина ключа должна быть 16 байт');
+            return false;
+        }
+        if (!document.getElementById('message').value) {
+            alert('Ошибка: введите сообщение');
+            return false;
+        }
+        return true;
+    }
+
+    function setUpVisualizationDiv() {
+        const visualizationDiv = document.getElementById('visualization');
+        visualizationDiv.innerHTML = '<hr/> <h3 class="text-center">Результат</h3>';
+        return visualizationDiv;
+    }
+
+    document.getElementById('encryptButton').addEventListener('click', async () => {
+        if (!validateInputs()) {
+            return;
+        }
+
+        const visualizationDiv = setUpVisualizationDiv();
+        const message = document.getElementById('message').value;
+        const key = document.getElementById('key').value;
+
+        makeResultMessage(await fetchEncrypt(message, key), visualizationDiv);
+    });
+
+    document.getElementById('decryptButton').addEventListener('click', async () => {
+        if (!validateInputs()) {
+            return;
+        }
+        const visualizationDiv = setUpVisualizationDiv();
+        const encryptedMessage = document.getElementById('message').value;
+        const key = document.getElementById('key').value;
+
+        makeResultMessage(await fetchDecrypt(encryptedMessage, key), visualizationDiv);
+    });
+
+    document.getElementById('key').addEventListener('change', () => {
+        const keyEl = document.getElementById('key');
+        const bytesCntEl = document.getElementById('bytes_cnt');
+        const key = keyEl.value;
+        const textEncoder = new TextEncoder();
+        const bytesLen = textEncoder.encode(key).length;
+
+        bytesCntEl.value = bytesLen;
+        if (bytesLen !== 16) {
+            keyEl.classList.add('is-invalid');
+            bytesCntEl.classList.add('is-invalid');
+        } else {
+            keyEl.classList.remove('is-invalid');
+            bytesCntEl.classList.remove('is-invalid');
+        }
+    });
+
+    const PARAMS_NAMES = ['NB', 'NK', 'NR', 'BLOCK_SIZE'];
+    window.addEventListener('load', async () => {
+        const params = await fetchParams();
+        for (const param_name of PARAMS_NAMES) {
+            document.getElementById(param_name).value = params[param_name];
+        }
+    });
+</script>
 </body>
 </html>

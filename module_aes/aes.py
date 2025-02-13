@@ -17,7 +17,7 @@ class AesGlobals:
         0xE1, 0xF8, 0x98, 0x11, 0x69, 0xD9, 0x8E, 0x94, 0x9B, 0x1E, 0x87, 0xE9, 0xCE, 0x55, 0x28, 0xDF,
         0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16,
     )
-    
+
     INV_SBOX = (
         0x52, 0x09, 0x6A, 0xD5, 0x30, 0x36, 0xA5, 0x38, 0xBF, 0x40, 0xA3, 0x9E, 0x81, 0xF3, 0xD7, 0xFB,
         0x7C, 0xE3, 0x39, 0x82, 0x9B, 0x2F, 0xFF, 0x87, 0x34, 0x8E, 0x43, 0x44, 0xC4, 0xDE, 0xE9, 0xCB,
@@ -36,18 +36,27 @@ class AesGlobals:
         0xA0, 0xE0, 0x3B, 0x4D, 0xAE, 0x2A, 0xF5, 0xB0, 0xC8, 0xEB, 0xBB, 0x3C, 0x83, 0x53, 0x99, 0x61,
         0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D,
     )
-    
+
     RCON = [
         0x01000000, 0x02000000, 0x04000000, 0x08000000, 0x10000000, 0x20000000, 0x40000000, 0x80000000,
         0x1b000000, 0x36000000
     ]
-    
+
     NB = 4  # Number of columns in the state matrix (also number of words)
     NK = 4  # Number of 32-bit words in the key (4 for AES-128)
     NR = 10  # Number of rounds for AES-128
     NR_ROWS = 4  # Number of rows
 
     BLOCK_SIZE = 16
+
+    @classmethod
+    def get_params(cls):
+        return {
+            'NB': cls.NB,
+            'NK': cls.NK,
+            'NR': cls.NR,
+            'BLOCK_SIZE': cls.BLOCK_SIZE
+        }
 
 
 class Pkcs7:
@@ -69,20 +78,20 @@ class Pkcs7:
 
 class AES:
     @classmethod
-    def aes_encrypt(cls, plaintext, key):
-        cls.__check_block_size(key)
+    def encrypt(cls, plaintext, key):
+        cls.__check_key_size(key)
 
         padded_plaintext = Pkcs7.pad(plaintext, AesGlobals.BLOCK_SIZE)
         ciphertext = b''
 
         for i in range(0, len(padded_plaintext), AesGlobals.BLOCK_SIZE):
             block = padded_plaintext[i:i + AesGlobals.BLOCK_SIZE]
-            ciphertext += cls.aes_encrypt_block(block, key)
+            ciphertext += cls.__encrypt_block(block, key)
 
         return ciphertext
 
     @classmethod
-    def aes_encrypt_block(cls, plaintext, key):
+    def __encrypt_block(cls, plaintext, key):
         state = cls.__bytes2mat(plaintext)
 
         w = cls.__key_expansion(key)
@@ -102,18 +111,18 @@ class AES:
         return cls.__mat2bytes(state)
 
     @classmethod
-    def aes_decrypt(cls, ciphertext, key):
-        cls.__check_block_size(key)
+    def decrypt(cls, ciphertext, key):
+        cls.__check_key_size(key)
 
         plaintext = b''
         for i in range(0, len(ciphertext), AesGlobals.BLOCK_SIZE):
             block = ciphertext[i:i + AesGlobals.BLOCK_SIZE]
-            plaintext += cls.__aes_decrypt_block(block, key)
+            plaintext += cls.__decrypt_block(block, key)
 
         return Pkcs7.unpad(plaintext)
 
     @classmethod
-    def __aes_decrypt_block(cls, ciphertext, key):
+    def __decrypt_block(cls, ciphertext, key):
         state = cls.__bytes2mat(ciphertext)
 
         w = cls.__key_expansion(key)
@@ -242,21 +251,14 @@ class AES:
                 state[row][col] ^= round_key[row][col]
 
     @classmethod
-    def __check_block_size(cls, key):
+    def __check_key_size(cls, key):
         if len(key) != AesGlobals.BLOCK_SIZE:
-            raise ValueError("Error: Key length must be 16 bytes (128 bits).")
+            raise ValueError(f"Error: Key length must be {AesGlobals.BLOCK_SIZE} bytes.")
 
 
-def main():
-    key = b"Sixteen byte key"
-    plaintext = b"This is some longer text that needs AES encryption with padding. This string is big. Some text, random text, urban, kreml, zxc, brazil"
-    ciphertext = AES.aes_encrypt(plaintext, key)
-    print("Ciphertext:", ciphertext.hex() if ciphertext else "Encryption failed")
-    decrypted_text = AES.aes_decrypt(ciphertext, key)
-    print("Decrypted text:", decrypted_text)
-    print("SUCCESS!!" if decrypted_text == plaintext else "FAILURE((")
+def encrypt(plaintext, key):
+    return AES.encrypt(plaintext, key)
 
 
-# Run Tests
-if __name__ == "__main__":
-    main()
+def decrypt(plaintext, key):
+    return AES.decrypt(plaintext, key)

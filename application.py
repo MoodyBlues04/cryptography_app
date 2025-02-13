@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
-from module_2814789 import *
-from module_gost_34_10_2018.gost_2018 import *
+from module_2814789 import gost2814789
+from module_gost_34_10_2018 import gost_2018
+from module_aes import aes as aes_module
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -64,7 +65,7 @@ def gost2814789():
         text = data.get('text', '')
         print(text)
         decrypt = data.get('decrypt', False)
-        encrypted_text, decrypted_text = gost2814789_gamma(text)
+        encrypted_text, decrypted_text = gost2814789.gost2814789_gamma(text)
         print(encrypted_text)
         print(decrypted_text)
         return jsonify({'steps': encrypted_text})
@@ -102,6 +103,7 @@ def gost_34_10_2018():
 @app.route('/gost_34_10_2018_explanation', methods=['GET', 'POST'])
 def gost_34_10_2018_explanation():
     return render_template('gost_34_10_2018_explanation.html')
+
 
 @app.route('/gost_params', methods=['GET', 'POST'])
 def gost_params():
@@ -147,11 +149,13 @@ def gost_params():
         {'p': 3041, 'a': 880, 'b': 226, 'P': (83, 19), 'm': 2972, 'q': 743},
         {'p': 8263, 'a': 848, 'b': 769, 'P': (356, 85), 'm': 8305, 'q': 11},
     ]
+
     def make_extended_params(raw_param):
-        obj_param = Params.from_dict(raw_param)
+        obj_param = gost_2018.Params.from_dict(raw_param)
         raw_param['private_key'] = obj_param.private_key
         raw_param['public_key'] = obj_param.public_key
         return raw_param
+
     return jsonify({'params': list(map(make_extended_params, params))})
 
 
@@ -159,9 +163,8 @@ def gost_params():
 def gost_validate_params():
     data = request.json
     params = data.get('params', '')
-    print(params)
     try:
-        errors = validate_params(params)
+        errors = gost_2018.validate_params(params)
     except Exception as e:
         errors = [{'key': 'server_error', 'message': e.__str__()}]
     return jsonify({'errors': errors})
@@ -172,16 +175,16 @@ def gost_make_signature():
     data = request.json
     raw_params = data.get('params', '')
 
-    errors = validate_params(raw_params)
+    errors = gost_2018.validate_params(raw_params)
     if len(errors):
         return jsonify({'errors': errors})
 
-    params = Params.from_dict(raw_params)
+    params = gost_2018.Params.from_dict(raw_params)
     message = data.get('message', None)
     if message is None:
         return jsonify({'errors': ['message is empty']})
 
-    hasher = GostHasher(params)
+    hasher = gost_2018.GostHasher(params)
     return jsonify({'signature': hasher.sign_message(message)})
 
 
@@ -190,19 +193,77 @@ def gost_verify_signature():
     data = request.json
     raw_params = data.get('params', '')
 
-    errors = validate_params(raw_params)
+    errors = gost_2018.validate_params(raw_params)
     if len(errors):
         return jsonify({'errors': errors})
 
-    params = Params.from_dict(raw_params)
+    params = gost_2018.Params.from_dict(raw_params)
     message = data.get('message', None)
     signature = data.get('signature', None)
     if message is None or signature is None:
         return jsonify({'errors': ['message or signature is empty']})
 
     signature = tuple(map(int, signature.split(',')))
-    hasher = GostHasher(params)
+    hasher = gost_2018.GostHasher(params)
     return jsonify({'is_valid': hasher.verify_signature(message, signature)})
+
+
+@app.route('/aes_encrypt', methods=['GET', 'POST'])
+def aes_encrypt():
+    data = request.json
+    message = data.get('message')
+    key = data.get('key')
+    import traceback
+
+    try:
+        errors = __validate_aes_params(message, key)
+        if len(errors):
+            return jsonify({'errors': errors})
+
+        return jsonify({'result': aes_module.AES.encrypt(__to_bytes(message), __to_bytes(key)).hex()})
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'exception': e.__str__()})
+
+
+@app.route('/aes_decrypt', methods=['GET', 'POST'])
+def aes_decrypt():
+    data = request.json
+    message = data.get('message')
+    key = data.get('key')
+
+    import traceback
+    try:
+        errors = __validate_aes_params(message, key)
+        if len(errors):
+            return jsonify({'errors': errors})
+
+        return jsonify({'result': aes_module.AES.decrypt(bytes.fromhex(message), __to_bytes(key)).decode('utf-8')})
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'exception': e.__str__()})
+
+
+@app.route('/aes_params', methods=['GET', 'POST'])
+def aes_params():
+    return jsonify({'params': aes_module.AesGlobals.get_params()})
+
+
+def __to_bytes(txt):
+    return bytes(txt, 'utf-8')
+
+
+def __validate_aes_params(message, key):
+    errors = []
+    if message is None:
+        errors.append({'message': 'Message not set'})
+    elif len(message) == 0:
+        errors.append({'message': 'Message must not be empty'})
+    if key is None:
+        errors.append({'key': 'Key not set'})
+    elif len(key) != aes_module.AesGlobals.BLOCK_SIZE:
+        errors.append({'key': f"Key size must be {aes_module.AesGlobals.BLOCK_SIZE}"})
+    return errors
 
 
 if __name__ == '__main__':

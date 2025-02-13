@@ -1,199 +1,171 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>AES in CBC Mode: Explained!</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AES Algorithm Explained</title>
     <style>
         body {
-            font-family: sans-serif;
+            font-family: Arial, sans-serif;
             line-height: 1.6;
             margin: 20px;
-        }
-
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-
-        h2 {
-            color: #555;
-            margin-top: 30px;
-        }
-
-        p {
-            margin-bottom: 15px;
-        }
-
-        .diagram {
-            border: 1px solid #ccc;
             padding: 20px;
-            margin: 20px auto;
-            max-width: 800px;
-            text-align: center;
             background-color: #f9f9f9;
         }
 
-        .diagram img {
-            max-width: 100%; /* Make images responsive */
-            height: auto;
+        h1, h2, h3 {
+            color: #333;
         }
 
-        .important {
-            font-weight: bold;
-            color: #d35400; /* A nice orange */
+        p {
+            color: #555;
         }
 
-        .code {
+        code {
             background-color: #eee;
-            padding: 5px;
+            padding: 2px 4px;
+            border-radius: 4px;
             font-family: monospace;
-            border: 1px solid #ddd;
-            overflow-x: auto; /* Enable horizontal scrolling for long lines */
-            display: block;
         }
 
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .interactive {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f1f1f1;
+            border-radius: 8px;
+        }
+
+        textarea, input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .output {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
+<h1>Advanced Encryption Standard (AES) Algorithm Explained</h1>
 
-<h1>AES in CBC Mode: Demystified</h1>
+<a href="/">Главная</a>
+<br>
+<a href="/aes">Реализация</a>
 
-<p>AES (Advanced Encryption Standard) is a powerful symmetric encryption algorithm used to protect sensitive data. But
-    AES itself is a *block cipher*, meaning it encrypts data in fixed-size chunks called blocks. To encrypt longer
-    messages, we need a *mode of operation*. One of the most common and secure modes is CBC (Cipher Block Chaining).</p>
-
-<h2>What is CBC (Cipher Block Chaining)?</h2>
-
-<p>CBC mode introduces a crucial element for security: an <span class="important">Initialization Vector (IV)</span>.
-    Think of the IV as a random starting point for the encryption process. It makes sure that even if you encrypt the
-    same plaintext multiple times with the same key, you'll get different ciphertexts each time. This prevents attackers
-    from recognizing patterns.</p>
-
-<div class="diagram">
-    <img src="" alt="CBC Encryption Diagram">
-    <p><i>CBC Encryption Process (Image from Wikimedia Commons)</i></p>
+<!-- How AES Works Section -->
+<div class="section">
+    <h2>How AES Works</h2>
+    <p>
+        AES operates on a 4x4 matrix of bytes called the <strong>state</strong>. The algorithm consists of multiple
+        rounds of transformations, depending on the key size:
+    </p>
+    <ul>
+        <li><strong>10 rounds</strong> for 128-bit keys</li>
+        <li><strong>12 rounds</strong> for 192-bit keys</li>
+        <li><strong>14 rounds</strong> for 256-bit keys</li>
+    </ul>
+    <p>
+        Each round (except the last) consists of four transformations:
+    </p>
+    <ol>
+        <li><strong>SubBytes</strong>: Substitutes each byte in the state using a substitution box (S-box).</li>
+        <li><strong>ShiftRows</strong>: Shifts the rows of the state matrix.</li>
+        <li><strong>MixColumns</strong>: Mixes the columns of the state matrix using matrix multiplication in Galois
+            Field (GF(2^8)).
+        </li>
+        <li><strong>AddRoundKey</strong>: XORs the state with a round key derived from the main key.</li>
+    </ol>
+    <p>
+        The final round skips the <code>MixColumns</code> step.
+    </p>
 </div>
 
-<h2>How CBC Mode Works: Step-by-Step</h2>
+<!-- Key Expansion Section -->
+<div class="section">
+    <h2>Key Expansion</h2>
+    <p>
+        AES uses a key schedule to generate round keys from the main encryption key. The key expansion process involves:
+    </p>
+    <ol>
+        <li>Dividing the key into 4-byte words.</li>
+        <li>Applying a series of transformations (rotation, S-box substitution, and XOR with round constants) to
+            generate new words.
+        </li>
+        <li>Combining the words to form the round keys.</li>
+    </ol>
+    <p>
+        The number of round keys depends on the number of rounds. For example, AES-128 requires 11 round keys (1 initial
+        key + 10 round keys).
+    </p>
+</div>
 
-<ol>
-    <li>
-        <p><span class="important">Initialization Vector (IV):</span> Choose a random, unique IV for each encryption.
-            <span class="important">Never reuse an IV with the same key!</span> The IV is *not* a secret; it's
-            transmitted along with the ciphertext.</p>
-    </li>
-    <li>
-        <p><span class="important">Padding:</span> AES works on fixed-size blocks. If your message isn't a multiple of
-            the AES block size (usually 16 bytes for AES-128), you need to <span class="important">pad</span> it.
-            Padding adds extra bytes to the end of the message to make it the right length. A common padding scheme is
-            PKCS7.</p>
-    </li>
-    <li>
-        <p><span class="important">XOR with IV (First Block):</span> The first block of your padded plaintext is XORed
-            (exclusive OR) with the IV.</p>
-    </li>
-    <li>
-        <p><span class="important">AES Encryption:</span> The result of the XOR operation is then encrypted using the
-            AES algorithm with your secret key.</p>
-    </li>
-    <li>
-        <p><span class="important">Chaining:</span> The ciphertext output from the previous step is now XORed with the
-            *next* block of plaintext. This "chaining" is what gives CBC its name and its increased security. This is
-            the core idea of CBC.</p>
-    </li>
-    <li>
-        <p><span class="important">Repeat:</span> Steps 4 and 5 are repeated for all remaining blocks of plaintext.</p>
-    </li>
-    <li>
-        <p><span class="important">Ciphertext Output:</span> The final ciphertext is the concatenation of the IV
-            followed by all the encrypted blocks.</p>
-    </li>
-</ol>
+<!-- Detailed Steps Section -->
+<div class="section">
+    <h2>Detailed Steps of AES</h2>
+    <h3>1. SubBytes</h3>
+    <p>
+        Each byte in the state matrix is replaced with a corresponding byte from the <strong>S-box</strong>. The S-box
+        is a lookup table that provides non-linear substitution.
+    </p>
+    <h3>2. ShiftRows</h3>
+    <p>
+        The rows of the state matrix are shifted cyclically:
+    </p>
+    <ul>
+        <li>Row 0: No shift</li>
+        <li>Row 1: Shifted left by 1 byte</li>
+        <li>Row 2: Shifted left by 2 bytes</li>
+        <li>Row 3: Shifted left by 3 bytes</li>
+    </ul>
+    <h3>3. MixColumns</h3>
+    <p>
+        Each column of the state matrix is transformed using matrix multiplication in GF(2^8). This step mixes the bytes
+        within each column.
+    </p>
+    <h3>4. AddRoundKey</h3>
+    <p>
+        The state matrix is XORed with the round key. This step adds the key material to the state.
+    </p>
+</div>
 
-<h2>Decryption in CBC Mode</h2>
-
-<p>Decryption is the reverse process, but it's just as important to understand:</p>
-
-<ol>
-    <li>
-        <p><span class="important">Extract IV:</span> Separate the IV from the beginning of the ciphertext.</p>
-    </li>
-    <li>
-        <p><span class="important">Decrypt the First Block:</span> Decrypt the first ciphertext block using AES and your
-            key.</p>
-    </li>
-    <li>
-        <p><span class="important">XOR with IV:</span> XOR the result of the AES decryption with the IV. This gives you
-            the first plaintext block.</p>
-    </li>
-    <li>
-        <p><span class="important">Decrypt Subsequent Blocks:</span> For each subsequent ciphertext block: decrypt it
-            using AES, then XOR the result with the *previous* ciphertext block (not the previous plaintext block!).</p>
-    </li>
-    <li>
-        <p><span class="important">Unpadding:</span> After decrypting all blocks, remove the padding to get the original
-            message.</p>
-    </li>
-</ol>
-
-<h2>Why is CBC Mode More Secure?</h2>
-
-<ul>
-    <li>
-        <p><span class="important">Prevents Pattern Recognition:</span> The IV and the chaining mechanism ensure that
-            even identical plaintext blocks will encrypt to different ciphertext blocks, preventing attackers from
-            detecting patterns and potentially breaking the encryption.</p>
-    </li>
-    <li>
-        <p><span class="important">Diffusion:</span> A change in one plaintext block affects all subsequent ciphertext
-            blocks. This makes it harder for attackers to manipulate the message without detection.</p>
-    </li>
-</ul>
-
-<h2>Important Considerations:</h2>
-
-<ul>
-    <li>
-        <p><span class="important">Key Management:</span> Securely storing and managing your AES key is paramount. If
-            the key is compromised, the encryption is worthless.</p>
-    </li>
-    <li>
-        <p><span class="important">IV Generation:</span> The IV must be truly random and unique for each encryption.
-            Using a predictable or reused IV severely weakens the encryption.</p>
-    </li>
-    <li>
-        <p><span class="important">Padding Oracle Attacks:</span> Be aware of padding oracle attacks, which can
-            potentially allow attackers to decrypt messages if they can observe how the decryption process handles
-            invalid padding. Use a secure implementation of CBC with proper error handling to mitigate these attacks.
-        </p>
-    </li>
-</ul>
-
-<h2>Example</h2>
-
-<p>Let's say our plaintext is "HELLO" and we need to encrypt it with AES-128 (16-byte block size). We'll pad it to be 16
-    bytes, generate a random IV, and use a secret key.</p>
-
-<p> (Example is simplified for explanation, actual AES operations are much more complex). </p>
-
-<p>While providing the *exact* AES implementation is beyond the scope of this explanation (it involves complex
-    mathematical operations and lookup tables), this HTML page gives you a solid understanding of the CBC mode of
-    operation. If you're interested in implementing AES from scratch, I'd recommend consulting the official AES
-    specification (FIPS PUB 197) and cryptographic textbooks.</p>
-
+<!-- Security and Applications Section -->
+<div class="section">
+    <h2>Security and Applications</h2>
+    <p>
+        AES is considered highly secure and is used in various applications, including:
+    </p>
+    <ul>
+        <li>Secure communication protocols (e.g., TLS, SSL)</li>
+        <li>File and disk encryption (e.g., BitLocker, FileVault)</li>
+        <li>Data protection in databases and cloud storage</li>
+    </ul>
+</div>
 </body>
 </html>
-
-html
-Key improvements:
-
-Clear and Concise Language: The explanation is written in plain English, avoiding unnecessary jargon.
-Step-by-Step Instructions: The encryption and decryption processes are broken down into easy-to-follow steps.
-Visual Aid: Includes a link to a public domain diagram illustrating the CBC encryption process. Consider downloading the image and including it directly in your HTML for better portability.
-Importance Highlighting: Uses span class="important" to emphasize crucial security aspects like IV generation and key management.
-Padding Explanation: Clearly explains the need for and purpose of padding.
-Security Considerations: Highlights important security concerns like padding oracle attacks.
-Example: Provides a simplified example to illustrate the process. (Note: It avoids trying to show the actual AES transformations because they are complex and would detract from the explanation of CBC mode.)
-CSS Styling: Basic CSS styling is included to make the page more readable.
-Responsive Image: The CSS now includes max-width: 100% for images, making them responsive to different screen sizes.
-Long Line Handling: Added overflow-x: auto to the .code style to allow horizontal scrolling for long code lines.
-This HTML provides a solid educational resource on AES in CBC mode, suitable for someone without a deep background in cryptography. Remember that implementing AES correctly from scratch is very difficult and prone to errors. It is strongly recommended to use well-vetted cryptographic libraries in real-world applications.
