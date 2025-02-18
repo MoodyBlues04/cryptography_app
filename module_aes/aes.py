@@ -83,6 +83,7 @@ class AesSteps:
     KEY_EXPANSION = 'key_expansion'
     BLOCKS = 'blocks'
     BLOCK = 'block'
+    BLOCK_RES = 'block_result'
     ROUNDS = 'rounds'
     STEPS = 'steps'
     STEP_STATE = 'state'
@@ -110,6 +111,9 @@ class AesSteps:
             self.ROUNDS: rounds if rounds is not None else []
         })
 
+    def set_block_result(self, block_result, block_idx = -1):
+        self.__steps[self.BLOCKS][block_idx][self.BLOCK_RES] = block_result
+
     def add_round(self, block_idx = -1):
         self.__steps[self.BLOCKS][block_idx][self.ROUNDS].append({self.STEPS: []})
 
@@ -135,7 +139,6 @@ class AES:
                'key_expansion': '',
                'blocks': [{
                     'block': '',
-                    # returns from self.__encrypt_block()
                     'rounds': [
                           0: {'steps': [{'state': state, 'name': name}]},
                     ]
@@ -186,7 +189,9 @@ class AES:
         self.__add_round_key(state, w[AesGlobals.NR * AesGlobals.NB: (AesGlobals.NR + 1) * AesGlobals.NB])
         self.__algo_steps.add_step(AesSteps.STEP_ADD_ROUND_KEY, state)
 
-        return self.__mat2bytes(state)
+        res = self.__mat2bytes(state)
+        self.__algo_steps.set_block_result(res.hex())
+        return res
 
     def decrypt(self, ciphertext):
         self.__init_algo_steps()
@@ -228,7 +233,9 @@ class AES:
         self.__add_round_key(state, w[0:AesGlobals.NB])
         self.__algo_steps.add_step(AesSteps.STEP_ADD_ROUND_KEY, state)
 
-        return self.__mat2bytes(state)
+        res = self.__mat2bytes(state)
+        self.__algo_steps.set_block_result(self.__decode_bytes_safe(res))
+        return res
 
     def __init_algo_steps(self):
         self.__algo_steps = AesSteps()

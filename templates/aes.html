@@ -46,7 +46,6 @@
             align-items: start;
             justify-content: center;
             margin-bottom: 40px;
-            margin-top: 10px;
             flex-wrap: wrap;
             row-gap: 30px;
         }
@@ -246,12 +245,16 @@
         hiddenSteps.classList.toggle('hidden-el');
     }
 
-    const makeBlockExplanation = (block) => {
+    const makeBlockExplanation = (block, blockIdx) => {
         const blockContainer = makeElWithClass('div', 'block-container');
         const hiddenContainer = makeElWithClass('div', 'block-container hidden-el');
         hiddenContainer.id = 'hidden-steps';
 
-        blockContainer.appendChild(makeElWithText('h4', `Block: '${block['block']}'`));
+        blockContainer.appendChild(makeElWithText('h4', `Block #${blockIdx}`));
+        const transformationDescription = makeElWithText('div', `'${block['block']}' → '${block['block_result']}'`);
+        transformationDescription.style = "margin-bottom: 15px";
+        blockContainer.appendChild(transformationDescription);
+        
         for (const [roundIdx, round] of block['rounds'].entries()) {
             const roundContainer = makeElWithClass('div', 'round-container');
             for (const step of round['steps']) {
@@ -288,8 +291,8 @@
         const algoStepsContainer = document.createElement('div');
         algoStepsContainer.className = 'algo-steps-container';
 
-        for (const block of steps['blocks']) {
-            algoStepsContainer.appendChild(makeBlockExplanation(block));
+        for (const [blockIdx, block] of steps['blocks'].entries()) {
+            algoStepsContainer.appendChild(makeBlockExplanation(block, blockIdx));
         }
         visualizationDiv.appendChild(algoStepsContainer);
     }
