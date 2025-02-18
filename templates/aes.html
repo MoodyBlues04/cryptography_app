@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,6 +22,63 @@
             margin-bottom: 1rem;
             border: 0;
             border-top: 2px solid rgba(0, 0, 0, 0.3);
+        }
+
+        .algo-steps-container {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .block-container {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .round-container {
+            display: flex;
+            width: 100%;
+            align-items: start;
+            justify-content: center;
+            margin-bottom: 40px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            row-gap: 30px;
+        }
+
+        .matrix-table {
+            border-collapse: collapse;
+            margin: 0 20px;
+            width: 25%;
+            aspect-ratio: 1 / 1;
+        }
+
+        .matrix-table, .matrix-table th, .matrix-table td {
+            border: 1px solid black;
+        }
+
+        .matrix-table th, .matrix-table td {
+            width: 25%;
+            height: 25%;
+            text-align: center;
+        }
+
+        .arrow-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 15%;
+        }
+
+        .arrow {
+            font-size: 24px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -106,8 +163,7 @@
             body: JSON.stringify({message: message, key: key}),
             headers: {'Content-Type': 'application/json'},
         })
-            .then((response) => response.json())
-            .then((data) => data.result); // todo check for errors
+            .then((response) => response.json());
     }
 
     async function fetchDecrypt(message, key) {
@@ -116,8 +172,7 @@
             body: JSON.stringify({message: message, key: key}),
             headers: {'Content-Type': 'application/json'},
         })
-            .then((response) => response.json())
-            .then((data) => data.result);
+            .then((response) => response.json());
     }
 
     const makeResultMessage = (message, visualizationDiv) => {
@@ -127,12 +182,85 @@
         result.className = 'form-control mb-5';
         result.id = 'result';
 
-        const label = document.createElement('label');
+        const label = document.createElement('h5');
         label.className = 'form-label';
-        label.htmlFor = 'result';
+        label.style = 'margin-top: 10px';
         label.innerText = 'Результат:';
         visualizationDiv.appendChild(label);
         visualizationDiv.appendChild(result);
+    }
+
+    const makeStateMatrix = (state) => {
+        const matEl = document.createElement('table');
+        matEl.className = 'matrix-table';
+        for (const row of state) {
+            const trEl = document.createElement('tr');
+            for (const cell of row) {
+                const tdEl = document.createElement('td');
+                tdEl.innerText = cell;
+                trEl.appendChild(tdEl);
+            }
+            matEl.appendChild(trEl);
+        }
+        return matEl;
+    }
+
+    const makeArrow = (text) => {
+        const container = document.createElement('div');
+        container.className = 'arrow-container';
+        const msg = document.createElement('div');
+        msg.className = 'message';
+        msg.innerText = text;
+        const arrow = document.createElement('div');
+        arrow.className = 'arrow';
+        arrow.innerText = '→';
+
+        container.appendChild(msg);
+        container.appendChild(arrow);
+        return container;
+    }
+
+    const makeElWithText = (elType, text) => {
+        const el = document.createElement(elType);
+        el.innerText = text;
+        return el;
+    }
+
+    const makeElWithClass = (elType, cls) => {
+        const el = document.createElement(elType);
+        el.className = cls;
+        return el;
+    }
+
+    const makeBlockExplanation = (block) => {
+        const blockContainer = makeElWithClass('div', 'block-container');
+
+        blockContainer.appendChild(makeElWithText('h4', `Block: '${block['block']}'`));
+
+        for (const [roundIdx, round] of block['rounds'].entries()) {
+            blockContainer.appendChild(makeElWithText('h5', `Round ${roundIdx}`));
+            const roundContainer = makeElWithClass('div', 'round-container');
+            for (const step of round['steps']) {
+                const arrow = makeArrow(step['name']);
+                const mat = makeStateMatrix(step['state']);
+                // todo explanation for each type of step
+                if (step['name'] !== 'start')
+                    roundContainer.appendChild(arrow);
+                roundContainer.appendChild(mat);
+            }
+            blockContainer.appendChild(roundContainer);
+        }
+        return blockContainer;
+    }
+
+    const makeAlgoSteps = (steps, visualizationDiv) => {
+        const algoStepsContainer = document.createElement('div');
+        algoStepsContainer.className = 'algo-steps-container';
+
+        for (const block of steps['blocks']) {
+            algoStepsContainer.appendChild(makeBlockExplanation(block));
+        }
+        visualizationDiv.appendChild(algoStepsContainer);
     }
 
     const validateInputs = () => {
@@ -147,9 +275,14 @@
         return true;
     }
 
-    function setUpVisualizationDiv() {
+    function setUpVisualizationDiv(key_expansion, blocks) {
         const visualizationDiv = document.getElementById('visualization');
-        visualizationDiv.innerHTML = '<hr/> <h3 class="text-center">Результат</h3>';
+        visualizationDiv.innerHTML = '<hr/>' +
+            '<h3 class="text-center">Результат</h3>' +
+            '<h5>Key expansion:</h5>' +
+            `<code>[${key_expansion}]</code>` +
+            '<h5>Blocks:</h5>' +
+            `<code>[${blocks.map((el) => `'${el}'`)}]</code> <br>`;
         return visualizationDiv;
     }
 
@@ -158,22 +291,32 @@
             return;
         }
 
-        const visualizationDiv = setUpVisualizationDiv();
         const message = document.getElementById('message').value;
         const key = document.getElementById('key').value;
 
-        makeResultMessage(await fetchEncrypt(message, key), visualizationDiv);
+        const response = await fetchEncrypt(message, key);
+        const encrypted = response.result, steps = response.steps;
+
+        const visualizationDiv = setUpVisualizationDiv(steps['key_expansion'], steps['blocks'].map((blockData) => blockData['block']));
+        makeResultMessage(encrypted, visualizationDiv);
+        makeAlgoSteps(steps, visualizationDiv);
+        // todo check for errors from back
     });
 
     document.getElementById('decryptButton').addEventListener('click', async () => {
         if (!validateInputs()) {
             return;
         }
-        const visualizationDiv = setUpVisualizationDiv();
         const encryptedMessage = document.getElementById('message').value;
         const key = document.getElementById('key').value;
 
-        makeResultMessage(await fetchDecrypt(encryptedMessage, key), visualizationDiv);
+        const response = await fetchDecrypt(encryptedMessage, key);
+        const decrypted = response.result, steps = response.steps;
+
+        const visualizationDiv = setUpVisualizationDiv(steps['key_expansion'], steps['blocks'].map((blockData) => blockData['block']));
+        makeResultMessage(decrypted, visualizationDiv);
+        makeAlgoSteps(steps, visualizationDiv);
+        // todo check for errors from back
     });
 
     document.getElementById('key').addEventListener('change', () => {

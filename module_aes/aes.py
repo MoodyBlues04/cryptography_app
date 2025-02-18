@@ -1,3 +1,6 @@
+from copy import deepcopy
+
+
 class AesGlobals:
     SBOX = (
         0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -76,73 +79,171 @@ class Pkcs7:
         return data[:-padding_len]
 
 
+class AesSteps:
+    KEY_EXPANSION = 'key_expansion'
+    BLOCKS = 'blocks'
+    BLOCK = 'block'
+    ROUNDS = 'rounds'
+    STEPS = 'steps'
+    STEP_STATE = 'state'
+    STEP_NAME = 'name'
+
+    STEP_START = 'start'
+    STEP_ADD_ROUND_KEY = 'add_round_key'
+    STEP_SUB_BYTES = 'sub_bytes'
+    STEP_SHIFT_ROWS = 'shift_rows'
+    STEP_MIX_COLS = 'mix_cols'
+
+    def __init__(self):
+        self.__steps = {self.KEY_EXPANSION: None, self.BLOCKS: []}
+
+    def set(self, key, value):
+        self.__steps[key] = value
+
+    @property
+    def steps(self):
+        return self.__steps
+
+    def add_block(self, block, rounds = None):
+        self.__steps[self.BLOCKS].append({
+            self.BLOCK: block,
+            self.ROUNDS: rounds if rounds is not None else []
+        })
+
+    def add_round(self, block_idx = -1):
+        self.__steps[self.BLOCKS][block_idx][self.ROUNDS].append({self.STEPS: []})
+
+    def add_step(self, step_name, state):
+        print(step_name, state)
+        print()
+        self.add_round_step({self.STEP_NAME: step_name, self.STEP_STATE: deepcopy(state)})
+
+    def add_round_step(self, step, block_idx = -1, round_idx = -1):
+        self.__steps[self.BLOCKS][block_idx][self.ROUNDS][round_idx][self.STEPS].append(deepcopy(step))
+
+
 class AES:
-    @classmethod
-    def encrypt(cls, plaintext, key):
-        cls.__check_key_size(key)
+    def __init__(self, key):
+        self.__check_key_size(key)
+        self.__key_expansion = self.__make_key_expansion(key)
+
+        self.__algo_steps = AesSteps()
+
+    def get_algo_steps(self):
+        """ Response structure:
+            {
+               'key_expansion': '',
+               'blocks': [{
+                    'block': '',
+                    # returns from self.__encrypt_block()
+                    'rounds': [
+                          0: {'steps': [{'state': state, 'name': name}]},
+                    ]
+               }]
+          }
+        """
+        return self.__algo_steps.steps
+
+    def encrypt(self, plaintext):
+        self.__init_algo_steps()
 
         padded_plaintext = Pkcs7.pad(plaintext, AesGlobals.BLOCK_SIZE)
         ciphertext = b''
 
         for i in range(0, len(padded_plaintext), AesGlobals.BLOCK_SIZE):
             block = padded_plaintext[i:i + AesGlobals.BLOCK_SIZE]
-            ciphertext += cls.__encrypt_block(block, key)
+            ciphertext += self.__encrypt_block(block)
 
         return ciphertext
 
-    @classmethod
-    def __encrypt_block(cls, plaintext, key):
-        state = cls.__bytes2mat(plaintext)
+    def __encrypt_block(self, block):
+        state = self.__bytes2mat(block)
+        w = self.__key_expansion
 
-        w = cls.__key_expansion(key)
+        self.__algo_steps.add_block(self.__decode_bytes_safe(block))
+        self.__algo_steps.add_round()
+        self.__algo_steps.add_step(AesSteps.STEP_START, state)
 
-        cls.__add_round_key(state, w[:AesGlobals.NB])
+        self.__add_round_key(state, w[:AesGlobals.NB])
+        self.__algo_steps.add_step(AesSteps.STEP_ADD_ROUND_KEY, state)
 
         for round_num in range(1, AesGlobals.NR):
-            cls.__sub_bytes(state)
-            cls.__shift_rows(state)
-            cls.__mix_columns(state)
-            cls.__add_round_key(state, w[round_num * AesGlobals.NB:(round_num + 1) * AesGlobals.NB])
+            self.__algo_steps.add_round()
+            self.__sub_bytes(state)
+            self.__algo_steps.add_step(AesSteps.STEP_SUB_BYTES, state)
+            self.__shift_rows(state)
+            self.__algo_steps.add_step(AesSteps.STEP_SHIFT_ROWS, state)
+            self.__mix_columns(state)
+            self.__algo_steps.add_step(AesSteps.STEP_MIX_COLS, state)
+            self.__add_round_key(state, w[round_num * AesGlobals.NB:(round_num + 1) * AesGlobals.NB])
+            self.__algo_steps.add_step(AesSteps.STEP_ADD_ROUND_KEY, state)
 
-        cls.__sub_bytes(state)
-        cls.__shift_rows(state)
-        cls.__add_round_key(state, w[AesGlobals.NR * AesGlobals.NB: (AesGlobals.NR + 1) * AesGlobals.NB])
+        self.__algo_steps.add_round()
+        self.__sub_bytes(state)
+        self.__algo_steps.add_step(AesSteps.STEP_SUB_BYTES, state)
+        self.__shift_rows(state)
+        self.__algo_steps.add_step(AesSteps.STEP_SHIFT_ROWS, state)
+        self.__add_round_key(state, w[AesGlobals.NR * AesGlobals.NB: (AesGlobals.NR + 1) * AesGlobals.NB])
+        self.__algo_steps.add_step(AesSteps.STEP_ADD_ROUND_KEY, state)
 
-        return cls.__mat2bytes(state)
+        return self.__mat2bytes(state)
 
-    @classmethod
-    def decrypt(cls, ciphertext, key):
-        cls.__check_key_size(key)
+    def decrypt(self, ciphertext):
+        self.__init_algo_steps()
 
         plaintext = b''
         for i in range(0, len(ciphertext), AesGlobals.BLOCK_SIZE):
             block = ciphertext[i:i + AesGlobals.BLOCK_SIZE]
-            plaintext += cls.__decrypt_block(block, key)
+            plaintext += self.__decrypt_block(block)
 
         return Pkcs7.unpad(plaintext)
 
-    @classmethod
-    def __decrypt_block(cls, ciphertext, key):
-        state = cls.__bytes2mat(ciphertext)
+    def __decrypt_block(self, block):
+        w = self.__key_expansion
+        state = self.__bytes2mat(block)
 
-        w = cls.__key_expansion(key)
+        self.__algo_steps.add_block(self.__decode_bytes_safe(block))
+        self.__algo_steps.add_round()
+        self.__algo_steps.add_step(AesSteps.STEP_START, state)
 
-        cls.__add_round_key(state, w[AesGlobals.NR * AesGlobals.NB: (AesGlobals.NR + 1) * AesGlobals.NB])
+        self.__add_round_key(state, w[AesGlobals.NR * AesGlobals.NB: (AesGlobals.NR + 1) * AesGlobals.NB])
+        self.__algo_steps.add_step(AesSteps.STEP_ADD_ROUND_KEY, state)
 
         for round_num in range(AesGlobals.NR - 1, 0, -1):
-            cls.__inv_shift_rows(state)
-            cls.__inv_sub_bytes(state)
-            cls.__add_round_key(state, w[round_num * AesGlobals.NB:(round_num + 1) * AesGlobals.NB])
-            cls.__inv_mix_columns(state)
+            self.__algo_steps.add_round()
+            self.__inv_shift_rows(state)
+            self.__algo_steps.add_step(AesSteps.STEP_SHIFT_ROWS, state)
+            self.__inv_sub_bytes(state)
+            self.__algo_steps.add_step(AesSteps.STEP_SUB_BYTES, state)
+            self.__add_round_key(state, w[round_num * AesGlobals.NB:(round_num + 1) * AesGlobals.NB])
+            self.__algo_steps.add_step(AesSteps.STEP_ADD_ROUND_KEY, state)
+            self.__inv_mix_columns(state)
+            self.__algo_steps.add_step(AesSteps.STEP_MIX_COLS, state)
 
-        cls.__inv_shift_rows(state)
-        cls.__inv_sub_bytes(state)
-        cls.__add_round_key(state, w[0:AesGlobals.NB])
+        self.__algo_steps.add_round()
+        self.__inv_shift_rows(state)
+        self.__algo_steps.add_step(AesSteps.STEP_SHIFT_ROWS, state)
+        self.__inv_sub_bytes(state)
+        self.__algo_steps.add_step(AesSteps.STEP_SUB_BYTES, state)
+        self.__add_round_key(state, w[0:AesGlobals.NB])
+        self.__algo_steps.add_step(AesSteps.STEP_ADD_ROUND_KEY, state)
 
-        return cls.__mat2bytes(state)
+        return self.__mat2bytes(state)
 
-    @classmethod
-    def __key_expansion(cls, key):
+    def __init_algo_steps(self):
+        self.__algo_steps = AesSteps()
+        self.__algo_steps.set(AesSteps.KEY_EXPANSION, [key_part.hex() for key_part in self.__key_expansion])
+
+    def __decode_bytes_safe(self, bytes_str):
+        result = ''
+        for byte in bytes_str:
+            try:
+                result += bytes([byte]).decode('utf-8')
+            except UnicodeDecodeError:
+                result += f'\\x{byte:02x}'
+        return result
+
+    def __make_key_expansion(self, key):
         w = [b'\x00\x00\x00\x00'] * (AesGlobals.NB * (AesGlobals.NR + 1))
 
         for i in range(AesGlobals.NK):
@@ -151,88 +252,70 @@ class AES:
         for i in range(AesGlobals.NK, AesGlobals.NB * (AesGlobals.NR + 1)):
             temp = w[i - 1]
             if i % AesGlobals.NK == 0:
-                temp = cls.__sub_word(cls.__rotate_word(temp))
+                temp = self.__sub_word(self.__rotate_word(temp))
                 rcon = AesGlobals.RCON[i // AesGlobals.NK - 1].to_bytes(4, 'big')
-                temp = cls.__xor_bytes(temp, rcon)
-            w[i] = cls.__xor_bytes(temp, w[i - AesGlobals.NK])
+                temp = self.__xor_bytes(temp, rcon)
+            w[i] = self.__xor_bytes(temp, w[i - AesGlobals.NK])
         return w
 
-    @classmethod
-    def __xor_bytes(cls, a, b):
+    def __xor_bytes(self, a, b):
         return bytes(i ^ j for i, j in zip(a, b))
 
-    @classmethod
-    def __bytes2mat(cls, text):
+    def __bytes2mat(self, text):
         return [[text[row * AesGlobals.NB + col] for col in range(AesGlobals.NB)] for row in range(AesGlobals.NR_ROWS)]
 
-    @classmethod
-    def __mat2bytes(cls, mat):
+    def __mat2bytes(self, mat):
         res = b''
         for row in range(AesGlobals.NR_ROWS):
             for col in range(AesGlobals.NB):
                 res += bytes([mat[row][col]])
         return res
 
-    @classmethod
-    def __rotate_word(cls, word):
+    def __rotate_word(self, word):
         return word[1:] + word[:1]
 
-    @classmethod
-    def __sub_word(cls, word):
+    def __sub_word(self, word):
         return bytes(AesGlobals.SBOX[b] for b in word)
 
-    @classmethod
-    def __sub_bytes(cls, state):
+    def __sub_bytes(self, state):
         for row in range(AesGlobals.NR_ROWS):
             for col in range(AesGlobals.NB):
                 state[row][col] = AesGlobals.SBOX[state[row][col]]
 
-    @classmethod
-    def __shift_rows(cls, state):
+    def __shift_rows(self, state):
         state[1] = state[1][1:] + state[1][:1]
         state[2] = state[2][2:] + state[2][:2]
         state[3] = state[3][3:] + state[3][:3]
 
-    @classmethod
-    def __inv_sub_bytes(cls, state):
+    def __inv_sub_bytes(self, state):
         for row in range(AesGlobals.NR_ROWS):
             for col in range(AesGlobals.NB):
                 state[row][col] = AesGlobals.INV_SBOX[state[row][col]]
 
-    @classmethod
-    def __inv_shift_rows(cls, state):
+    def __inv_shift_rows(self, state):
         state[1] = state[1][3:] + state[1][:3]
         state[2] = state[2][2:] + state[2][:2]
         state[3] = state[3][1:] + state[3][:1]
 
-    @classmethod
-    def __inv_mix_columns(cls, state):
+    def __inv_mix_columns(self, state):
+        s = deepcopy(state)
         for c in range(AesGlobals.NB):
-            cls.__inv_mix_single_column([state[r][c] for r in range(AesGlobals.NR_ROWS)])
+            s0, s1, s2, s3 = s[0][c], s[1][c], s[2][c], s[3][c]
+            state[0][c] = self.__gf_mult(0x0e, s0) ^ self.__gf_mult(0x0b, s1) ^ self.__gf_mult(0x0d, s2) ^ self.__gf_mult(0x09, s3)
+            state[1][c] = self.__gf_mult(0x09, s0) ^ self.__gf_mult(0x0e, s1) ^ self.__gf_mult(0x0b, s2) ^ self.__gf_mult(0x0d, s3)
+            state[2][c] = self.__gf_mult(0x0d, s0) ^ self.__gf_mult(0x09, s1) ^ self.__gf_mult(0x0e, s2) ^ self.__gf_mult(0x0b, s3)
+            state[3][c] = self.__gf_mult(0x0b, s0) ^ self.__gf_mult(0x0d, s1) ^ self.__gf_mult(0x09, s2) ^ self.__gf_mult(0x0e, s3)
 
-    @classmethod
-    def __inv_mix_single_column(cls, s):
-        s0, s1, s2, s3 = s[0], s[1], s[2], s[3]
-        s[0] = cls.__gf_mult(0x0e, s0) ^ cls.__gf_mult(0x0b, s1) ^ cls.__gf_mult(0x0d, s2) ^ cls.__gf_mult(0x09, s3)
-        s[1] = cls.__gf_mult(0x09, s0) ^ cls.__gf_mult(0x0e, s1) ^ cls.__gf_mult(0x0b, s2) ^ cls.__gf_mult(0x0d, s3)
-        s[2] = cls.__gf_mult(0x0d, s0) ^ cls.__gf_mult(0x09, s1) ^ cls.__gf_mult(0x0e, s2) ^ cls.__gf_mult(0x0b, s3)
-        s[3] = cls.__gf_mult(0x0b, s0) ^ cls.__gf_mult(0x0d, s1) ^ cls.__gf_mult(0x09, s2) ^ cls.__gf_mult(0x0e, s3)
-
-    @classmethod
-    def __mix_columns(cls, state):
+    def __mix_columns(self, state):
+        s = deepcopy(state)
         for c in range(AesGlobals.NB):
-            cls.__mix_single_column([state[r][c] for r in range(AesGlobals.NR_ROWS)])
+            s0, s1, s2, s3 = s[0][c], s[1][c], s[2][c], s[3][c]
+            state[0][c] = self.__gf_mult(0x02, s0) ^ self.__gf_mult(0x03, s1) ^ s2 ^ s3
+            state[1][c] = s0 ^ self.__gf_mult(0x02, s1) ^ self.__gf_mult(0x03, s2) ^ s3
+            state[2][c] = s0 ^ s1 ^ self.__gf_mult(0x02, s2) ^ self.__gf_mult(0x03, s3)
+            state[3][c] = self.__gf_mult(0x03, s0) ^ s1 ^ s2 ^ self.__gf_mult(0x02, s3)
 
-    @classmethod
-    def __mix_single_column(cls, s):
-        s0, s1, s2, s3 = s[0], s[1], s[2], s[3]
-        s[0] = cls.__gf_mult(0x02, s0) ^ cls.__gf_mult(0x03, s1) ^ s2 ^ s3
-        s[1] = s0 ^ cls.__gf_mult(0x02, s1) ^ cls.__gf_mult(0x03, s2) ^ s3
-        s[2] = s0 ^ s1 ^ cls.__gf_mult(0x02, s2) ^ cls.__gf_mult(0x03, s3)
-        s[3] = cls.__gf_mult(0x03, s0) ^ s1 ^ s2 ^ cls.__gf_mult(0x02, s3)
-
-    @classmethod
-    def __gf_mult(cls, a, b):
+    def __gf_mult(self, a, b):
         product = 0
         for i in range(8):
             if (b & 1) == 1:
@@ -244,21 +327,21 @@ class AES:
             b >>= 1
         return product
 
-    @classmethod
-    def __add_round_key(cls, state, round_key):
+    def __add_round_key(self, state, round_key):
         for row in range(AesGlobals.NR_ROWS):
             for col in range(AesGlobals.NB):
                 state[row][col] ^= round_key[row][col]
 
-    @classmethod
-    def __check_key_size(cls, key):
+    def __check_key_size(self, key):
         if len(key) != AesGlobals.BLOCK_SIZE:
             raise ValueError(f"Error: Key length must be {AesGlobals.BLOCK_SIZE} bytes.")
 
 
 def encrypt(plaintext, key):
-    return AES.encrypt(plaintext, key)
+    aes = AES(key)
+    return {'result': aes.encrypt(plaintext).hex(), 'steps': aes.get_algo_steps()}
 
 
 def decrypt(plaintext, key):
-    return AES.decrypt(plaintext, key)
+    aes = AES(key)
+    return {'result': aes.decrypt(plaintext).decode('utf-8'), 'steps': aes.get_algo_steps()}

@@ -72,17 +72,6 @@ def gost2814789():
     return render_template('gost2814789.html')
 
 
-@app.route('/aes', methods=['GET', 'POST'])
-def aes():
-    # Логика обработки AES
-    return render_template('aes.html')
-
-
-@app.route('/aes_explanation', methods=['GET', 'POST'])
-def aes_explanation():
-    return render_template('aes_explanation.html')
-
-
 @app.route('/rsa', methods=['GET', 'POST'])
 def rsa():
     # Логика обработки RSA
@@ -208,6 +197,17 @@ def gost_verify_signature():
     return jsonify({'is_valid': hasher.verify_signature(message, signature)})
 
 
+@app.route('/aes', methods=['GET', 'POST'])
+def aes():
+    # Логика обработки AES
+    return render_template('aes.html')
+
+
+@app.route('/aes_explanation', methods=['GET', 'POST'])
+def aes_explanation():
+    return render_template('aes_explanation.html')
+
+
 @app.route('/aes_encrypt', methods=['GET', 'POST'])
 def aes_encrypt():
     data = request.json
@@ -219,8 +219,7 @@ def aes_encrypt():
         errors = __validate_aes_params(message, key)
         if len(errors):
             return jsonify({'errors': errors})
-
-        return jsonify({'result': aes_module.AES.encrypt(__to_bytes(message), __to_bytes(key)).hex()})
+        return jsonify(aes_module.encrypt(__to_bytes(message), __to_bytes(key)))
     except Exception as e:
         traceback.print_exc()
         return jsonify({'exception': e.__str__()})
@@ -237,8 +236,7 @@ def aes_decrypt():
         errors = __validate_aes_params(message, key)
         if len(errors):
             return jsonify({'errors': errors})
-
-        return jsonify({'result': aes_module.AES.decrypt(bytes.fromhex(message), __to_bytes(key)).decode('utf-8')})
+        return jsonify(aes_module.decrypt(bytes.fromhex(message), __to_bytes(key)))
     except Exception as e:
         traceback.print_exc()
         return jsonify({'exception': e.__str__()})
