@@ -213,16 +213,13 @@ def aes_encrypt():
     data = request.json
     message = data.get('message')
     key = data.get('key')
-    import traceback
-
     try:
         errors = __validate_aes_params(message, key)
         if len(errors):
             return jsonify({'errors': errors})
         return jsonify(aes_module.encrypt(__to_bytes(message), __to_bytes(key)))
     except Exception as e:
-        traceback.print_exc()
-        return jsonify({'exception': e.__str__()})
+        return jsonify({'errors': [e.__str__()]})
 
 
 @app.route('/aes_decrypt', methods=['GET', 'POST'])
@@ -230,16 +227,21 @@ def aes_decrypt():
     data = request.json
     message = data.get('message')
     key = data.get('key')
-
-    import traceback
     try:
         errors = __validate_aes_params(message, key)
         if len(errors):
             return jsonify({'errors': errors})
+        __check_hex_correctance(message)
         return jsonify(aes_module.decrypt(bytes.fromhex(message), __to_bytes(key)))
     except Exception as e:
-        traceback.print_exc()
-        return jsonify({'exception': e.__str__()})
+        return jsonify({'errors': [e.__str__()]})
+
+
+def __check_hex_correctance(text):
+    try:
+        int(text, 16)
+    except Exception as e:
+        raise Exception('encoded message must be correct hex')
 
 
 @app.route('/aes_params', methods=['GET', 'POST'])
@@ -254,13 +256,13 @@ def __to_bytes(txt):
 def __validate_aes_params(message, key):
     errors = []
     if message is None:
-        errors.append({'message': 'Message not set'})
+        errors.append('Message not set')
     elif len(message) == 0:
-        errors.append({'message': 'Message must not be empty'})
+        errors.append('Message must not be empty')
     if key is None:
-        errors.append({'key': 'Key not set'})
+        errors.append('Key not set')
     elif len(key) != aes_module.AesGlobals.BLOCK_SIZE:
-        errors.append({'key': f"Key size must be {aes_module.AesGlobals.BLOCK_SIZE}"})
+        errors.append(f"Key size must be {aes_module.AesGlobals.BLOCK_SIZE}")
     return errors
 
 

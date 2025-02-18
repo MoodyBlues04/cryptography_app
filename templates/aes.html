@@ -151,31 +151,38 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
 
 <script>
+    async function aesFetch(url, params) {
+        return await fetch(url, params)
+            .then((response) => response.json())
+            .then((data) => {
+                if (data['errors']) {
+                    throw new Error(data['errors'][0]);
+                }
+                return data;
+            })
+    }
     async function fetchParams() {
-        return await fetch('/aes_params', {
+        const res = await aesFetch('/aes_params', {
             method: 'GET',
             headers: {'Content-Type': 'application/json'},
-        })
-            .then((response) => response.json())
-            .then((data) => data.params);
+        });
+        return res.params;
     }
 
     async function fetchEncrypt(message, key) {
-        return await fetch('/aes_encrypt', {
+        return await aesFetch('/aes_encrypt', {
             method: 'POST',
             body: JSON.stringify({message: message, key: key}),
             headers: {'Content-Type': 'application/json'},
-        })
-            .then((response) => response.json());
+        });
     }
 
     async function fetchDecrypt(message, key) {
-        return await fetch('/aes_decrypt', {
+        return await aesFetch('/aes_decrypt', {
             method: 'POST',
             body: JSON.stringify({message: message, key: key}),
             headers: {'Content-Type': 'application/json'},
-        })
-            .then((response) => response.json());
+        });
     }
 
     const makeElWithText = (elType, text) => {
@@ -328,13 +335,16 @@
         const message = document.getElementById('message').value;
         const key = document.getElementById('key').value;
 
-        const response = await fetchEncrypt(message, key);
-        const encrypted = response.result, steps = response.steps;
+        try {
+            const response = await fetchEncrypt(message, key);
+            const encrypted = response.result, steps = response.steps;
 
-        const visualizationDiv = setUpVisualizationDiv(steps['key_expansion'], steps['blocks'].map((blockData) => blockData['block']));
-        makeResultMessage(encrypted, visualizationDiv);
-        makeAlgoSteps(steps, visualizationDiv);
-        // todo check for errors from back
+            const visualizationDiv = setUpVisualizationDiv(steps['key_expansion'], steps['blocks'].map((blockData) => blockData['block']));
+            makeResultMessage(encrypted, visualizationDiv);
+            makeAlgoSteps(steps, visualizationDiv);
+        } catch (e) {
+            alert(e.toString());
+        }
     });
 
     document.getElementById('decryptButton').addEventListener('click', async () => {
@@ -344,13 +354,16 @@
         const encryptedMessage = document.getElementById('message').value;
         const key = document.getElementById('key').value;
 
-        const response = await fetchDecrypt(encryptedMessage, key);
-        const decrypted = response.result, steps = response.steps;
+        try {
+            const response = await fetchDecrypt(encryptedMessage, key);
+            const decrypted = response.result, steps = response.steps;
 
-        const visualizationDiv = setUpVisualizationDiv(steps['key_expansion'], steps['blocks'].map((blockData) => blockData['block']));
-        makeResultMessage(decrypted, visualizationDiv);
-        makeAlgoSteps(steps, visualizationDiv);
-        // todo check for errors from back
+            const visualizationDiv = setUpVisualizationDiv(steps['key_expansion'], steps['blocks'].map((blockData) => blockData['block']));
+            makeResultMessage(decrypted, visualizationDiv);
+            makeAlgoSteps(steps, visualizationDiv);
+        } catch (e) {
+            alert(e.toString());
+        }
     });
 
     document.getElementById('key').addEventListener('change', () => {
