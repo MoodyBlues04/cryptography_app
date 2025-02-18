@@ -80,6 +80,10 @@
             font-size: 24px;
             font-weight: bold;
         }
+
+        .hidden-el {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -175,51 +179,6 @@
             .then((response) => response.json());
     }
 
-    const makeResultMessage = (message, visualizationDiv) => {
-        const result = document.createElement('input');
-        result.value = message;
-        result.readOnly = true;
-        result.className = 'form-control mb-5';
-        result.id = 'result';
-
-        const label = document.createElement('h5');
-        label.className = 'form-label';
-        label.style = 'margin-top: 10px';
-        label.innerText = 'Результат:';
-        visualizationDiv.appendChild(label);
-        visualizationDiv.appendChild(result);
-    }
-
-    const makeStateMatrix = (state) => {
-        const matEl = document.createElement('table');
-        matEl.className = 'matrix-table';
-        for (const row of state) {
-            const trEl = document.createElement('tr');
-            for (const cell of row) {
-                const tdEl = document.createElement('td');
-                tdEl.innerText = cell;
-                trEl.appendChild(tdEl);
-            }
-            matEl.appendChild(trEl);
-        }
-        return matEl;
-    }
-
-    const makeArrow = (text) => {
-        const container = document.createElement('div');
-        container.className = 'arrow-container';
-        const msg = document.createElement('div');
-        msg.className = 'message';
-        msg.innerText = text;
-        const arrow = document.createElement('div');
-        arrow.className = 'arrow';
-        arrow.innerText = '→';
-
-        container.appendChild(msg);
-        container.appendChild(arrow);
-        return container;
-    }
-
     const makeElWithText = (elType, text) => {
         const el = document.createElement(elType);
         el.innerText = text;
@@ -232,23 +191,95 @@
         return el;
     }
 
+    const makeResultMessage = (message, visualizationDiv) => {
+        const result = makeElWithClass('input', 'form-control mb-5');
+        result.value = message;
+        result.readOnly = true;
+        result.id = 'result';
+
+        const label = makeElWithClass('h5', 'form-label');
+        label.style = 'margin-top: 10px';
+        label.innerText = 'Результат:';
+
+        visualizationDiv.appendChild(label);
+        visualizationDiv.appendChild(result);
+    }
+
+    const makeStateMatrix = (state) => {
+        const matEl = makeElWithClass('table', 'matrix-table');
+        for (const row of state) {
+            const trEl = document.createElement('tr');
+            for (const cell of row) {
+                trEl.appendChild(makeElWithText('td', cell));
+            }
+            matEl.appendChild(trEl);
+        }
+        return matEl;
+    }
+
+    const getTitleForStep = (stepName) => {
+        return {
+            add_round_key: 'Поочередное применение XOR ко всем элементам матрицы и соответствующим элементам ключа',
+            sub_bytes: 'Смещение для каждого элемента матрицы в соответствии с SBOX (предподсчитанная матрица)',
+            shift_rows: 'Круговое смещение столбцов матрицы',
+            mix_cols: 'Перемножение ячеек матрицы над полем GF^4',
+        }[stepName];
+    }
+
+    const makeArrow = (stepName) => {
+        const container = makeElWithClass('div', 'arrow-container');
+        container.title = getTitleForStep(stepName);
+        const msg = makeElWithClass('div', 'message');
+        msg.innerText = stepName;
+        const arrow =  makeElWithClass('div', 'arrow');
+        arrow.innerText = '→';
+
+        container.appendChild(msg);
+        container.appendChild(arrow);
+        return container;
+    }
+
+    const toggleVisibility = () => {
+        const hiddenSteps = document.getElementById('hidden-steps');
+        const btn = document.getElementById('toggle-visibility');
+        btn.innerText = hiddenSteps.classList.contains('hidden-el') ? 'Hide' : 'Show hidden steps';
+        hiddenSteps.classList.toggle('hidden-el');
+    }
+
     const makeBlockExplanation = (block) => {
         const blockContainer = makeElWithClass('div', 'block-container');
+        const hiddenContainer = makeElWithClass('div', 'block-container hidden-el');
+        hiddenContainer.id = 'hidden-steps';
 
         blockContainer.appendChild(makeElWithText('h4', `Block: '${block['block']}'`));
-
         for (const [roundIdx, round] of block['rounds'].entries()) {
-            blockContainer.appendChild(makeElWithText('h5', `Round ${roundIdx}`));
             const roundContainer = makeElWithClass('div', 'round-container');
             for (const step of round['steps']) {
                 const arrow = makeArrow(step['name']);
                 const mat = makeStateMatrix(step['state']);
-                // todo explanation for each type of step
                 if (step['name'] !== 'start')
                     roundContainer.appendChild(arrow);
+                else
+                    mat.style += '; margin-left: 17.5%';
                 roundContainer.appendChild(mat);
             }
-            blockContainer.appendChild(roundContainer);
+            if (roundIdx >= 2) {
+                hiddenContainer.appendChild(makeElWithText('h5', `Round ${roundIdx}`));
+                hiddenContainer.appendChild(roundContainer);
+            } else {
+                blockContainer.appendChild(makeElWithText('h5', `Round ${roundIdx}`));
+                blockContainer.appendChild(roundContainer);
+            }
+        }
+        if (block['rounds'].length > 2) {
+            const toggleStepsVisibility = document.createElement('button');
+            toggleStepsVisibility.id = 'toggle-visibility';
+            toggleStepsVisibility.innerText = 'Show hidden steps';
+            toggleStepsVisibility.style = 'margin-bottom: 10px';
+            toggleStepsVisibility.onclick = toggleVisibility;
+
+            blockContainer.appendChild(toggleStepsVisibility);
+            blockContainer.appendChild(hiddenContainer);
         }
         return blockContainer;
     }
