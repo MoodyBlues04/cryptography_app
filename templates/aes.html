@@ -221,7 +221,7 @@
             add_round_key: 'Поочередное применение XOR ко всем элементам матрицы и соответствующим элементам ключа',
             sub_bytes: 'Смещение для каждого элемента матрицы в соответствии с SBOX (предподсчитанная матрица)',
             shift_rows: 'Круговое смещение столбцов матрицы',
-            mix_cols: 'Перемножение ячеек матрицы над полем GF^4',
+            mix_cols: 'Перемножение ячеек матрицы над полем GF(2^8)',
         }[stepName];
     }
 
@@ -254,7 +254,7 @@
         const transformationDescription = makeElWithText('div', `'${block['block']}' → '${block['block_result']}'`);
         transformationDescription.style = "margin-bottom: 15px";
         blockContainer.appendChild(transformationDescription);
-        
+
         for (const [roundIdx, round] of block['rounds'].entries()) {
             const roundContainer = makeElWithClass('div', 'round-container');
             for (const step of round['steps']) {

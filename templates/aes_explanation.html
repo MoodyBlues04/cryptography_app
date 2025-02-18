@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AES Algorithm Explained</title>
+    <title>Алгоритм AES Объяснение</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,11 +21,10 @@
             color: #555;
         }
 
-        code {
+        pre {
             background-color: #eee;
-            padding: 2px 4px;
-            border-radius: 4px;
             font-family: monospace;
+            width: 100%;
         }
 
         .section {
@@ -73,98 +72,106 @@
     </style>
 </head>
 <body>
-<h1>Advanced Encryption Standard (AES) Algorithm Explained</h1>
+<h1>Алгоритм Advanced Encryption Standard (AES) Объяснение</h1>
 
 <a href="/">Главная</a>
 <br>
 <a href="/aes">Реализация</a>
 
-<!-- How AES Works Section -->
+<!-- Как работает AES -->
 <div class="section">
-    <h2>How AES Works</h2>
+    <h2>Как работает AES</h2>
     <p>
-        AES operates on a 4x4 matrix of bytes called the <strong>state</strong>. The algorithm consists of multiple
-        rounds of transformations, depending on the key size:
+        AES работает с матрицей 4x4 байтов, называемой <strong>состоянием</strong>. Алгоритм состоит из нескольких
+        раундов преобразований, в зависимости от размера ключа:
     </p>
     <ul>
-        <li><strong>10 rounds</strong> for 128-bit keys</li>
-        <li><strong>12 rounds</strong> for 192-bit keys</li>
-        <li><strong>14 rounds</strong> for 256-bit keys</li>
+        <li><strong>10 раундов</strong> для 128-битных ключей</li>
+        <li><strong>12 раундов</strong> для 192-битных ключей</li>
+        <li><strong>14 раундов</strong> для 256-битных ключей</li>
     </ul>
     <p>
-        Each round (except the last) consists of four transformations:
+        Каждый раунд (кроме последнего) состоит из четырех преобразований:
     </p>
     <ol>
-        <li><strong>SubBytes</strong>: Substitutes each byte in the state using a substitution box (S-box).</li>
-        <li><strong>ShiftRows</strong>: Shifts the rows of the state matrix.</li>
-        <li><strong>MixColumns</strong>: Mixes the columns of the state matrix using matrix multiplication in Galois
-            Field (GF(2^8)).
-        </li>
-        <li><strong>AddRoundKey</strong>: XORs the state with a round key derived from the main key.</li>
+        <li><strong>SubBytes</strong>: Заменяет каждый байт в состоянии с использованием таблицы замен (S-box).</li>
+        <li><strong>ShiftRows</strong>: Сдвигает строки матрицы состояния.</li>
+        <li><strong>MixColumns</strong>: Смешивает столбцы матрицы состояния с использованием умножения матриц в поле Галуа GF(2^8).</li>
+        <li><strong>AddRoundKey</strong>: Выполняет операцию XOR состояния с раундовым ключом, полученным из основного ключа.</li>
     </ol>
     <p>
-        The final round skips the <code>MixColumns</code> step.
+        Финальный раунд пропускает шаг <code>MixColumns</code>.
     </p>
 </div>
 
-<!-- Key Expansion Section -->
+<!-- Расширение ключа -->
 <div class="section">
-    <h2>Key Expansion</h2>
+    <h2>Расширение ключа</h2>
     <p>
-        AES uses a key schedule to generate round keys from the main encryption key. The key expansion process involves:
+        AES использует расписание ключей для генерации раундовых ключей из основного ключа шифрования. Процесс расширения ключа включает:
     </p>
     <ol>
-        <li>Dividing the key into 4-byte words.</li>
-        <li>Applying a series of transformations (rotation, S-box substitution, and XOR with round constants) to
-            generate new words.
-        </li>
-        <li>Combining the words to form the round keys.</li>
+        <li>Разделение ключа на 4-байтовые слова.</li>
+        <li>Применение серии преобразований (вращение, замена через S-box и XOR с константами раунда) для генерации новых слов.</li>
+        <li>Объединение слов для формирования раундовых ключей.</li>
     </ol>
     <p>
-        The number of round keys depends on the number of rounds. For example, AES-128 requires 11 round keys (1 initial
-        key + 10 round keys).
+        Количество раундовых ключей зависит от количества раундов. Например, AES-128 требует 11 раундовых ключей (1 начальный ключ + 10 раундовых ключей).
     </p>
 </div>
 
-<!-- Detailed Steps Section -->
+<!-- Подробные шаги AES -->
 <div class="section">
-    <h2>Detailed Steps of AES</h2>
+    <h2>Подробные шаги AES</h2>
     <h3>1. SubBytes</h3>
     <p>
-        Each byte in the state matrix is replaced with a corresponding byte from the <strong>S-box</strong>. The S-box
-        is a lookup table that provides non-linear substitution.
+        Каждый байт в матрице состояния заменяется соответствующим байтом из <strong>S-box</strong>. S-box — это таблица замен, обеспечивающая нелинейную подстановку.
     </p>
+    <pre><code>def sub_bytes(state):
+    for row in range(4):
+        for col in range(4):
+            state[row][col] = SBOX[state[row][col]]</code></pre>
+
     <h3>2. ShiftRows</h3>
     <p>
-        The rows of the state matrix are shifted cyclically:
+        Строки матрицы состояния циклически сдвигаются:
     </p>
-    <ul>
-        <li>Row 0: No shift</li>
-        <li>Row 1: Shifted left by 1 byte</li>
-        <li>Row 2: Shifted left by 2 bytes</li>
-        <li>Row 3: Shifted left by 3 bytes</li>
-    </ul>
+    <pre><code>def shift_rows(matrix):
+    matrix[1] = matrix[1][1:] + matrix[1][:1]
+    matrix[2] = matrix[2][2:] + matrix[2][:2]
+    matrix[3] = matrix[3][3:] + matrix[3][:3]</code></pre>
     <h3>3. MixColumns</h3>
     <p>
-        Each column of the state matrix is transformed using matrix multiplication in GF(2^8). This step mixes the bytes
-        within each column.
+        Каждый столбец матрицы состояния преобразуется с использованием умножения матриц в GF(2^8). Этот шаг смешивает байты внутри каждого столбца.
     </p>
+    <pre><code>def mix_columns(s):
+    for c in range(AesGlobals.NB):
+        s0, s1, s2, s3 = s[0][c], s[1][c], s[2][c], s[3][c]
+        s[0][c] = gf_mult(0x02, s0) ^ gf_mult(0x03, s1) ^ s2 ^ s3
+        s[1][c] = s0 ^ gf_mult(0x02, s1) ^ gf_mult(0x03, s2) ^ s3
+        s[2][c] = s0 ^ s1 ^ gf_mult(0x02, s2) ^ gf_mult(0x03, s3)
+        s[3][c] = gf_mult(0x03, s0) ^ s1 ^ s2 ^ gf_mult(0x02, s3)</code></pre>
+
     <h3>4. AddRoundKey</h3>
     <p>
-        The state matrix is XORed with the round key. This step adds the key material to the state.
+        Матрица состояния подвергается операции XOR с раундовым ключом. Этот шаг добавляет материал ключа к состоянию.
     </p>
+    <pre><code>def add_round_key(state, round_key):
+    for row in range(4):
+        for col in range(4):
+            state[row][col] ^= round_key[row][col]</code></pre>
 </div>
 
-<!-- Security and Applications Section -->
+<!-- Безопасность и Применение -->
 <div class="section">
-    <h2>Security and Applications</h2>
+    <h2>Безопасность и Применение</h2>
     <p>
-        AES is considered highly secure and is used in various applications, including:
+        AES считается высоко безопасным и используется в различных приложениях, включая:
     </p>
     <ul>
-        <li>Secure communication protocols (e.g., TLS, SSL)</li>
-        <li>File and disk encryption (e.g., BitLocker, FileVault)</li>
-        <li>Data protection in databases and cloud storage</li>
+        <li>Протоколы безопасной связи (например, TLS, SSL)</li>
+        <li>Шифрование файлов и дисков (например, BitLocker, FileVault)</li>
+        <li>Защита данных в базах данных и облачных хранилищах</li>
     </ul>
 </div>
 </body>
