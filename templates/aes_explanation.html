@@ -137,6 +137,7 @@
     for row in range(4):
         for col in range(4):
             state[row][col] = SBOX[state[row][col]]</code></pre>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a4/AES-SubBytes.svg" alt="sub bytes" style="height: 220px">
 
     <h3>2. ShiftRows</h3>
     <p>
@@ -146,6 +147,8 @@
     matrix[1] = matrix[1][1:] + matrix[1][:1]
     matrix[2] = matrix[2][2:] + matrix[2][:2]
     matrix[3] = matrix[3][3:] + matrix[3][:3]</code></pre>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/6/66/AES-ShiftRows.svg" alt="sub bytes" style="height: 200px">
+
     <h3>3. MixColumns</h3>
     <p>
         Каждый столбец матрицы состояния преобразуется с использованием умножения матриц в GF(2^8). Этот шаг смешивает байты внутри каждого столбца.
@@ -157,6 +160,7 @@
         s[1][c] = s0 ^ gf_mult(0x02, s1) ^ gf_mult(0x03, s2) ^ s3
         s[2][c] = s0 ^ s1 ^ gf_mult(0x02, s2) ^ gf_mult(0x03, s3)
         s[3][c] = gf_mult(0x03, s0) ^ s1 ^ s2 ^ gf_mult(0x02, s3)</code></pre>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/7/76/AES-MixColumns.svg" alt="sub bytes" style="height: 200px">
 
     <h3>4. AddRoundKey</h3>
     <p>
@@ -166,6 +170,7 @@
     for row in range(4):
         for col in range(4):
             state[row][col] ^= round_key[row][col]</code></pre>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/a/ad/AES-AddRoundKey.svg" alt="sub bytes" style="height: 300px">
 </div>
 
 <!-- Безопасность и Применение -->

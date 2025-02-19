@@ -288,9 +288,8 @@ class AES:
                 state[row][col] = AesGlobals.SBOX[state[row][col]]
 
     def __shift_rows(self, state):
-        state[1] = state[1][1:] + state[1][:1]
-        state[2] = state[2][2:] + state[2][:2]
-        state[3] = state[3][3:] + state[3][:3]
+        for i in range(1, len(state)):
+            state[i] = state[i][i:] + state[i][:i]
 
     def __inv_sub_bytes(self, state):
         for row in range(AesGlobals.NR_ROWS):
@@ -298,9 +297,8 @@ class AES:
                 state[row][col] = AesGlobals.INV_SBOX[state[row][col]]
 
     def __inv_shift_rows(self, state):
-        state[1] = state[1][3:] + state[1][:3]
-        state[2] = state[2][2:] + state[2][:2]
-        state[3] = state[3][1:] + state[3][:1]
+        for i in range(1, len(state)):
+            state[i] = state[i][len(state) - i:] + state[i][:len(state) - i]
 
     def __inv_mix_columns(self, state):
         s = deepcopy(state)
