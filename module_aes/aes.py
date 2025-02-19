@@ -118,8 +118,6 @@ class AesSteps:
         self.__steps[self.BLOCKS][block_idx][self.ROUNDS].append({self.STEPS: []})
 
     def add_step(self, step_name, state):
-        print(step_name, state)
-        print()
         self.add_round_step({self.STEP_NAME: step_name, self.STEP_STATE: deepcopy(state)})
 
     def add_round_step(self, step, block_idx = -1, round_idx = -1):

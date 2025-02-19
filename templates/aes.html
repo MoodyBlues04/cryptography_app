@@ -54,16 +54,15 @@
             border-collapse: collapse;
             margin: 0 20px;
             width: 25%;
-            aspect-ratio: 1 / 1;
         }
 
         .matrix-table, .matrix-table th, .matrix-table td {
             border: 1px solid black;
         }
 
-        .matrix-table th, .matrix-table td {
+        .matrix-table tr th, .matrix-table tr td {
+            aspect-ratio: 1 / 1;
             width: 25%;
-            height: 25%;
             text-align: center;
         }
 
@@ -82,6 +81,10 @@
 
         .hidden-el {
             display: none;
+        }
+
+        .vertical-arrow-container {
+            transform: rotate(90deg); /* Rotate to make it vertical */
         }
     </style>
 </head>
@@ -110,7 +113,7 @@
         </div>
         <div class="col-4">
             <label for="BLOCK_SIZE" class="form-label">Block size:</label>
-            <input type="number" class="form-control" id="BLOCK_SIZE" readonly>
+            <input type="text" class="form-control" id="BLOCK_SIZE" readonly>
         </div>
 
     </div>
@@ -130,6 +133,7 @@
             <div class="invalid-feedback" id="key-error-message">
                 Длина ключа должна быть 16 байт
             </div>
+            <small>Лучше использовать латиницу для совпадения числа байт</small>
         </div>
         <div class="col-4">
             <label for="bytes_cnt" class="form-label">Число байт в ключе:</label>
@@ -248,7 +252,7 @@
     const toggleVisibility = () => {
         const hiddenSteps = document.getElementById('hidden-steps');
         const btn = document.getElementById('toggle-visibility');
-        btn.innerText = hiddenSteps.classList.contains('hidden-el') ? 'Hide' : 'Show hidden steps';
+        btn.innerText = hiddenSteps.classList.contains('hidden-el') ? 'Скрыть' : 'Показать скрытые шаги';
         hiddenSteps.classList.toggle('hidden-el');
     }
 
@@ -257,7 +261,7 @@
         const hiddenContainer = makeElWithClass('div', 'block-container hidden-el');
         hiddenContainer.id = 'hidden-steps';
 
-        blockContainer.appendChild(makeElWithText('h4', `Block #${blockIdx}`));
+        blockContainer.appendChild(makeElWithText('h4', `Блок ${blockIdx}`));
         const transformationDescription = makeElWithText('div', `'${block['block']}' → '${block['block_result']}'`);
         transformationDescription.style = "margin-bottom: 15px";
         blockContainer.appendChild(transformationDescription);
@@ -267,17 +271,18 @@
             for (const step of round['steps']) {
                 const arrow = makeArrow(step['name']);
                 const mat = makeStateMatrix(step['state']);
+                mat.style.setProperty('aspect-ratio', '1 / 1');
                 if (step['name'] !== 'start')
                     roundContainer.appendChild(arrow);
                 else
-                    mat.style += '; margin-left: 17.5%';
+                    mat.style.setProperty('margin-left', '17.5%');
                 roundContainer.appendChild(mat);
             }
             if (roundIdx >= 2) {
-                hiddenContainer.appendChild(makeElWithText('h5', `Round ${roundIdx}`));
+                hiddenContainer.appendChild(makeElWithText('h5', `Раунд ${roundIdx}`));
                 hiddenContainer.appendChild(roundContainer);
             } else {
-                blockContainer.appendChild(makeElWithText('h5', `Round ${roundIdx}`));
+                blockContainer.appendChild(makeElWithText('h5', `Раунд ${roundIdx}`));
                 blockContainer.appendChild(roundContainer);
             }
         }
@@ -294,14 +299,58 @@
         return blockContainer;
     }
 
+    const matToRow = (matrix) => {
+        let res = [];
+        for (const row of matrix)
+            for (const cell of row)
+                res.push(cell);
+        return [res];
+    }
+
+    const makeVerticalArrow = () => {
+        const el = makeElWithClass('div', 'vertical-arrow-container');
+        el.innerHTML = '<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg">' +
+            '<line x1="10" y1="30" x2="40" y2="30" stroke="#333" stroke-width="3" stroke-linecap="round" />' +
+            '<polygon points="40 25, 50 30, 40 35" fill="#333" />' +
+        '</svg>';
+        return el;
+    }
+
+    const last = (arr) => arr[arr.length - 1];
+
+    const makeResultRetrievingExplanation = (blocks) => {
+        const explanationContainer = makeElWithClass('div', 'block-container');
+        explanationContainer.appendChild(makeElWithText('h4', `Получение результата:`));
+        console.log(blocks);
+        for (const [blockIdx, block] of blocks.entries()) {
+            const blockValue = block['block'], blockRes = block['block_result'], lastRound = last(block['rounds']), lastStep = last(lastRound['steps']);
+            const stateMatrix = makeStateMatrix(lastStep['state']);
+            stateMatrix.style.setProperty('aspect-ratio', '1 / 1');
+
+            const stateAsRow = makeStateMatrix(matToRow(lastStep['state']));
+            stateAsRow.style.setProperty('height', '25px');
+
+            explanationContainer.appendChild(makeElWithText('h5', `Блок : '${blockValue}'`));
+            explanationContainer.appendChild(makeVerticalArrow());
+            explanationContainer.appendChild(makeElWithText('h5', `Полученная матрица:`));
+            explanationContainer.appendChild(stateMatrix);
+            explanationContainer.appendChild(makeVerticalArrow());
+            explanationContainer.appendChild(makeElWithText('h5', `Превращаем матрицу в массив байт:`));
+            explanationContainer.appendChild(stateAsRow);
+            explanationContainer.appendChild(makeVerticalArrow());
+            explanationContainer.appendChild(makeElWithText('h5', `Получаем hex массива байт: '${blockRes}'`));
+        }
+        return explanationContainer;
+    }
+
     const makeAlgoSteps = (steps, visualizationDiv) => {
-        const algoStepsContainer = document.createElement('div');
-        algoStepsContainer.className = 'algo-steps-container';
+        const algoStepsContainer = makeElWithClass('div', 'algo-steps-container');
 
         for (const [blockIdx, block] of steps['blocks'].entries()) {
             algoStepsContainer.appendChild(makeBlockExplanation(block, blockIdx));
         }
         visualizationDiv.appendChild(algoStepsContainer);
+        visualizationDiv.appendChild(makeResultRetrievingExplanation(steps['blocks']));
     }
 
     const validateInputs = () => {
@@ -344,6 +393,7 @@
             makeAlgoSteps(steps, visualizationDiv);
         } catch (e) {
             alert(e.toString());
+            throw e;
         }
     });
 
@@ -363,6 +413,7 @@
             makeAlgoSteps(steps, visualizationDiv);
         } catch (e) {
             alert(e.toString());
+            throw e;
         }
     });
 
@@ -387,7 +438,11 @@
     window.addEventListener('load', async () => {
         const params = await fetchParams();
         for (const param_name of PARAMS_NAMES) {
-            document.getElementById(param_name).value = params[param_name];
+            if (param_name === 'BLOCK_SIZE') {
+                document.getElementById(param_name).value = `${params[param_name] * 8} бит`;
+            } else {
+                document.getElementById(param_name).value = params[param_name];
+            }
         }
     });
 </script>
