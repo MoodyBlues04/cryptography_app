@@ -1,15 +1,127 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>ГОСТ 28147 описание</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ГОСТ 28147-89 описание</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 5px;
+            border-radius: 4px;
+            font-family: "Courier New", monospace;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
 <body>
-Это про режим гаммирования
-<img src="https://habrastorage.org/r/w1560/files/56d/e5f/d8e/56de5fd8ead7450d873e4bc1f1ee0f4f.png"
-     alt="Иллюстрация работы">
+<h1>ГОСТ 28147-89</h1>
+
+<a href="/">Главная</a>
+<br>
+<a href="/gost_28147_89">Реализация</a>
+
+<div class="section">
+    <h2>Общие идеи алгоритма</h2>
+    <p>
+        <strong>ГОСТ 28147-89</strong> — это российский стандарт симметричного шифрования, который используется для
+        защиты данных.
+        Алгоритм является блочным шифром с длиной блока 64 бита (8 байт) и ключом длиной 256 бит (32 байта). Алгоритм
+        использует 32 раунда преобразований (по числу байт в ключе).
+        Также алгоритм использует S_box: Нелинейные преобразования, которые могут быть стандартными или настраиваемыми.
+    </p>
+    <p>
+        ГОСТ 28147-89 поддерживает несколько режимов работы, включая:
+    </p>
+    <ul>
+        <li><strong>ECB</strong> - простая замена</li>
+        <li><strong>CTR</strong> - гаммирование</li>
+        <li><strong>CFB</strong> - гаммирование с обратной связью</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2>Режим ECB</h2>
+    <p>
+        <strong>ECB</strong> — это самый простой режим работы блочного шифра. Каждый блок данных шифруется независимо с
+        использованием одного и того же ключа.
+    </p>
+    <h3>Особенности:</h3>
+    <ul>
+        <li>Каждый блок шифруется независимо.</li>
+        <li>Не требует вектора инициализации (IV).</li>
+        <li>Одинаковые блоки открытого текста дают одинаковые блоки шифротекста.</li>
+    </ul>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/1/1f/Feistel_function_GOST.png" style="height:350px"
+         alt="Схема работы ECB"/>
+</div>
+
+<div class="section">
+    <h2>Режим CTR</h2>
+    <p>
+        <strong>CTR</strong> — это режим гаммирования, при котором данные шифруются путем XOR с гаммой, генерируемой на
+        основе счетчика и <code>nonce</code>.
+    </p>
+    <h3>Особенности:</h3>
+    <ul>
+        <li>Гамма не зависит от данных.</li>
+        <li>Не требует дополнения данных.</li>
+        <li>Позволяет параллельно шифровать блоки.</li>
+    </ul>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/4/46/Gammirovanie_GOST.png" style="height: 280px"
+         alt="Схема работы CTR">
+</div>
+
+<div class="section">
+    <h2>Режим CFB</h2>
+    <p>
+        <strong>CFB</strong> — это режим гаммирования с обратной связью, при котором гамма для шифрования каждого блока
+        зависит от предыдущего зашифрованного блока.
+    </p>
+    <h3>Особенности:</h3>
+    <ul>
+        <li>Гамма зависит от предыдущего зашифрованного блока.</li>
+        <li>Самосинхронизирующийся режим.</li>
+        <li>Не требует дополнения данных.</li>
+    </ul>
+
+    <img src="https://habrastorage.org/r/w1560/files/56d/e5f/d8e/56de5fd8ead7450d873e4bc1f1ee0f4f.png"
+         alt="Схема работы CFB" style="height: 300px">
+</div>
+
+<div class="section">
+    <h2>Заключение</h2>
+    <ul>
+        <li><strong>ECB</strong>: Простой режим, но не рекомендуется для шифрования больших объемов данных.</li>
+        <li><strong>CTR</strong>: Потоковый режим, подходит для параллельной обработки.</li>
+        <li><strong>CFB</strong>: Самосинхронизирующийся режим, устойчивый к ошибкам передачи.</li>
+    </ul>
+</div>
 </body>
 </html>
