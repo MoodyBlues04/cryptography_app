@@ -91,7 +91,8 @@ class GostEcb:
         if len(key) != self._KEY_SIZE:
             raise ValueError(f"Ключ должен быть длиной {self._KEY_SIZE} байт.")
 
-    def _s_to_bytes(self, text: Union[str, bytes]) -> bytes:
+    @staticmethod
+    def s_to_bytes(text: Union[str, bytes]) -> bytes:
         return text.encode('utf-8') if isinstance(text, str) else text
 
     def _xor_bytes(self, bytes_a: bytes, bytes_b: bytes) -> bytes:
@@ -107,7 +108,7 @@ class GostCtr(GostEcb):
         self.__nonce = int.from_bytes(nonce, byteorder='big')
 
     def encrypt(self, plaintext: Union[bytes, str]) -> bytes:
-        plaintext = self._s_to_bytes(plaintext)
+        plaintext = self.s_to_bytes(plaintext)
 
         encrypted_data = b''
         for i in range(0, len(plaintext), self._BLOCK_SIZE):
@@ -134,7 +135,7 @@ class GostCfb(GostEcb):
         self.__init_vec = init_vec
 
     def encrypt(self, plaintext: Union[bytes, str]) -> bytes:
-        plaintext = self._s_to_bytes(plaintext)
+        plaintext = self.s_to_bytes(plaintext)
         encrypted_data = b''
         prev_block = self.__init_vec
         for i in range(0, len(plaintext), self._BLOCK_SIZE):
@@ -188,8 +189,7 @@ def decrypt(params: dict) -> str:
 
 def __make_gost(params: dict):
     mode, key = __get_or_fail('mode', params, 'Введите mode'), __get_or_fail('key', params, 'Введите key')
-    if isinstance(key, str):
-        key = key.encode('utf-8')
+    key = GostEcb.s_to_bytes(key)
 
     gost_constructor = get_algo_class(mode)
     if gost_constructor is None:
@@ -197,10 +197,10 @@ def __make_gost(params: dict):
 
     if mode == 'CTR':
         nonce = __get_or_fail('nonce', params, 'Для режима CTR введите nonce')
-        return gost_constructor(key, nonce)
+        return gost_constructor(key, GostEcb.s_to_bytes(nonce))
     if mode == 'CFB':
         init_vec = __get_or_fail('init_vec', params, 'Для режима CFB введите init_vec')
-        return gost_constructor(key, init_vec)
+        return gost_constructor(key, GostEcb.s_to_bytes(init_vec))
     return gost_constructor(key)
 
 
