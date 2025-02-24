@@ -43,7 +43,7 @@ class GostEcb:
         self.__pkcs7 = Pkcs7(max_pad_len=self._BLOCK_SIZE)
 
     def encrypt(self, plaintext: Union[bytes, str]) -> bytes:
-        plaintext = self._s_to_bytes(plaintext)
+        plaintext = self.s_to_bytes(plaintext)
         plaintext = self.__pkcs7.pad_data(plaintext)
         encrypted_data = b''
         for i in range(0, len(plaintext), self._BLOCK_SIZE):
@@ -209,12 +209,3 @@ def __get_or_fail(key: str, params: dict, message: str):
     if val is None:
         raise Exception(message)
     return val
-
-
-if __name__ == "__main__":
-    _key = b'\x01\x23\x45\x67\x89\xAB\xCD\xEF\x01\x23\x45\x67\x89\xAB\xCD\xEF\x01\x23\x45\x67\x89\xAB\xCD\xEF\x01\x23\x45\x67\x89\xAB\xCD\xEF'
-    _plaintext = "Hello, ГОСТ 28147-89!"
-
-    init_vec = os.urandom(8)
-    encrypted = encrypt({'mode': 'CFB', 'text': _plaintext, 'key': _key, 'init_vec': init_vec})
-    print(encrypted, decrypt({'mode': 'CFB', 'text': encrypted, 'key': _key, 'init_vec': init_vec}))
