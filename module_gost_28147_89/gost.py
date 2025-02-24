@@ -188,6 +188,9 @@ def decrypt(params: dict) -> str:
 
 def __make_gost(params: dict):
     mode, key = __get_or_fail('mode', params, 'Введите mode'), __get_or_fail('key', params, 'Введите key')
+    if isinstance(key, str):
+        key = key.encode('utf-8')
+
     gost_constructor = get_algo_class(mode)
     if gost_constructor is None:
         raise Exception(f"Некорректный режим работы алгоритма: '{mode}'")

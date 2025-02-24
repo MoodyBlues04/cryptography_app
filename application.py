@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from module_gost_34_10_2018 import gost_2018
 from module_aes import aes as aes_module
+from module_gost_28147_89 import gost as gost_28147
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -58,24 +59,41 @@ def gost_28147_89_explanation():
 
 
 @app.route('/gost_28147_89')
-def about_gost_28147_89():
+def gost_28147_89():
     return render_template('gost_28147_89.html')
 
 
-@app.route('/gost2814789', methods=['GET', 'POST'])
-def gost2814789():
-    return render_template('gost2814789.html')
+@app.route('/gost_28147_89_encrypt', methods=['GET', 'POST'])
+def gost_28147_89_encrypt():
+    import traceback
+    data = request.json
+    try:
+        return jsonify({'text': gost_28147.encrypt(data)})
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+        return jsonify({'errors': [e.__str__()]})
+
+
+@app.route('/gost_28147_89_decrypt', methods=['GET', 'POST'])
+def gost_28147_89_decrypt():
+    import traceback
+    data = request.json
+    try:
+        return jsonify({'text': gost_28147.decrypt(data)})
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+        return jsonify({'errors': [e.__str__()]})
 
 
 @app.route('/rsa', methods=['GET', 'POST'])
 def rsa():
-    # Логика обработки RSA
     return render_template('rsa.html')
 
 
 @app.route('/rsa_explanation', methods=['GET', 'POST'])
 def rsa_explanation():
-    # Объяснение работы RSA
     return render_template('rsa_explanation.html')
 
 

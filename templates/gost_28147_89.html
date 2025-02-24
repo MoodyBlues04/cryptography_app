@@ -119,7 +119,7 @@
 
 
 <script>
-    async function aesFetch(url, params) {
+    async function gostFetch(url, params) {
         return await fetch(url, params)
             .then((response) => response.json())
             .then((data) => {
@@ -129,30 +129,22 @@
                 return data;
             })
     }
-    async function fetchParams() {
-        const res = await aesFetch('/aes_params', {
-            method: 'GET',
-            headers: {'Content-Type': 'application/json'},
-        });
-        return res.params;
-    }
 
-    async function fetchEncrypt(message, key) {
-        return await aesFetch('/aes_encrypt', {
+    async function fetchEncrypt(params) {
+        return await gostFetch('/gost_28147_89_encrypt', {
             method: 'POST',
-            body: JSON.stringify({message: message, key: key}),
+            body: JSON.stringify(params),
             headers: {'Content-Type': 'application/json'},
         });
     }
 
-    async function fetchDecrypt(message, key) {
-        return await aesFetch('/aes_decrypt', {
+    async function fetchDecrypt(params) {
+        return await gostFetch('/gost_28147_89_decrypt', {
             method: 'POST',
-            body: JSON.stringify({message: message, key: key}),
+            body: JSON.stringify(params),
             headers: {'Content-Type': 'application/json'},
         });
     }
-    // todo remove redundant
 
     const makeElWithText = (elType, text) => {
         const el = document.createElement(elType);
@@ -166,6 +158,15 @@
         return el;
     }
 
+    function setUpVisualizationDiv(text) {
+        const visualizationDiv = document.getElementById('visualization');
+        visualizationDiv.innerHTML = '<hr/>' +
+            '<h3 class="text-center">Результат</h3>' +
+            '<label for="result" class="form-label">Результат:</label>' +
+            `<input id="result" class="form-control" value="${text}" readonly/>`;
+        return visualizationDiv;
+    }
+
     const KEY_BYTES_CNT = 32, INIT_VEC_BYTES_CNT = 8, NONCE_BYTES_CNT = 4;
     const EL_TO_BYTES_CNT = {
         'key': KEY_BYTES_CNT,
@@ -175,31 +176,56 @@
 
     const validateInputs = () => {
         for (const [elId, bytesCnt] of Object.entries(EL_TO_BYTES_CNT)) {
-            if (Number(document.getElementById(`${elId}_bytes_cnt`).value) !== bytesCnt) {
+            if (Number(getVal(`${elId}_bytes_cnt`)) !== bytesCnt) {
                 alert(`Ошибка: длина ${elId} должна быть ${bytesCnt} байт`);
                 return false;
             }
         }
-        if (!document.getElementById('message').value) {
+        if (!getVal('message')) {
             alert('Ошибка: введите сообщение');
             return false;
         }
         return true;
     }
 
+    const getVal = (elId) => document.getElementById(elId).value
+
+    const makeParams = () => {
+        return {
+            key: getVal('key'),
+            text: getVal('message'),
+            mode: getVal('mode'),
+            init_vec: getVal('init_vec'),
+            nonce: getVal('nonce'),
+        }
+    }
+
     document.getElementById('encryptButton').addEventListener('click', async () => {
         if (!validateInputs()) {
             return;
         }
-
-        console.log('encrypt')
+        try {
+            const params = makeParams();
+            const response = await fetchEncrypt(params);
+            setUpVisualizationDiv(response.text);
+        } catch (e) {
+            alert(`Ошибка: ${e}`);
+            throw e;
+        }
     });
 
     document.getElementById('decryptButton').addEventListener('click', async () => {
         if (!validateInputs()) {
             return;
         }
-        console.log('decrypt')
+        try {
+            const params = makeParams();
+            const response = await fetchDecrypt(params);
+            setUpVisualizationDiv(response.text);
+        } catch (e) {
+            alert(`Ошибка: ${e}`);
+            throw e;
+        }
     });
 
     for (const [elId, bytesCnt] of Object.entries(EL_TO_BYTES_CNT)) {
