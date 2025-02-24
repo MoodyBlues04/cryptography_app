@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify
-from module_2814789 import gost2814789
 from module_gost_34_10_2018 import gost_2018
 from module_aes import aes as aes_module
 
@@ -53,22 +52,18 @@ def caesar():
     return render_template('caesar.html')
 
 
-@app.route('/about-gost2814789')
-def about_gost28147():
-    return render_template('about-gost2814789.html')
+@app.route('/gost_28147_89_explanation')
+def gost_28147_89_explanation():
+    return render_template('gost_28147_89_explanation.html')
+
+
+@app.route('/gost_28147_89')
+def about_gost_28147_89():
+    return render_template('gost_28147_89.html')
 
 
 @app.route('/gost2814789', methods=['GET', 'POST'])
 def gost2814789():
-    if request.method == 'POST':
-        data = request.json
-        text = data.get('text', '')
-        print(text)
-        decrypt = data.get('decrypt', False)
-        encrypted_text, decrypted_text = gost2814789.gost2814789_gamma(text)
-        print(encrypted_text)
-        print(decrypted_text)
-        return jsonify({'steps': encrypted_text})
     return render_template('gost2814789.html')
 
 
