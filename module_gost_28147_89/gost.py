@@ -86,32 +86,32 @@ class GostEcb:
         self._subkeys = struct.unpack('>8L', key)
         self._s_box = s_box or self._DEFAULT_S_BOX
         self.__pkcs7 = Pkcs7(max_pad_len=self._BLOCK_SIZE)
-        self.__steps = GostSteps()
+        self._steps = GostSteps()
 
     def get_steps(self) -> list:
-        return self.__steps.get_steps()
+        return self._steps.get_steps()
 
     def encrypt(self, plaintext: Union[bytes, str]) -> bytes:
-        self.__steps = GostSteps()
+        self._steps = GostSteps()
         plaintext = self.s_to_bytes(plaintext)
         plaintext = self.__pkcs7.pad_data(plaintext)
         encrypted_data = b''
         for i in range(0, len(plaintext), self._BLOCK_SIZE):
             block = _bytes_to_int(plaintext[i:i + self._BLOCK_SIZE])
-            self.__steps.add_block(block)
+            self._steps.add_block(block)
             encrypted_block = self._encrypt_block(block)
-            self.__steps.add_block_res(encrypted_block)
+            self._steps.add_block_res(encrypted_block)
             encrypted_data += encrypted_block.to_bytes(self._BLOCK_SIZE, 'big')
         return encrypted_data
 
     def decrypt(self, ciphertext: bytes) -> bytes:
-        self.__steps = GostSteps()
+        self._steps = GostSteps()
         decrypted_data = b''
         for i in range(0, len(ciphertext), self._BLOCK_SIZE):
             block = _bytes_to_int(ciphertext[i:i + self._BLOCK_SIZE])
-            self.__steps.add_block(block)
+            self._steps.add_block(block)
             decrypted_block = self._decrypt_block(block)
-            self.__steps.add_block_res(decrypted_block)
+            self._steps.add_block_res(decrypted_block)
             decrypted_data += decrypted_block.to_bytes(self._BLOCK_SIZE, 'big')
         return self.__pkcs7.unpad_data(decrypted_data)
 
@@ -121,7 +121,7 @@ class GostEcb:
             subkey = self._subkeys[self.__get_subkey_idx(i)]
             new_right = left ^ self._f_function(right, subkey)
             left, right = right, new_right
-            self.__steps.add_block_round(self.__join_ints(left, right))
+            self._steps.add_block_round(self.__join_ints(left, right))
         return self.__join_ints(left, right)
 
     def _decrypt_block(self, block: int) -> int:
@@ -130,7 +130,7 @@ class GostEcb:
             subkey = self._subkeys[self.__get_subkey_idx(i)]
             new_left = right ^ self._f_function(left, subkey)
             left, right = new_left, left
-            self.__steps.add_block_round(self.__join_ints(left, right))
+            self._steps.add_block_round(self.__join_ints(left, right))
         return self.__join_ints(left, right)
 
     def __join_ints(self, left: int, right: int):
@@ -173,9 +173,9 @@ class GostCtr(GostEcb):
         encrypted_data = b''
         for i in range(0, len(plaintext), self._BLOCK_SIZE):
             block = plaintext[i:i + self._BLOCK_SIZE]
-            self.__steps.add_block(_bytes_to_int(block))
+            self._steps.add_block(_bytes_to_int(block))
             encrypted_block = self._xor_bytes(block, self._gamma(i))
-            self.__steps.add_block_res(_bytes_to_int(encrypted_block))
+            self._steps.add_block_res(_bytes_to_int(encrypted_block))
             encrypted_data += encrypted_block
         return encrypted_data
 
@@ -203,9 +203,9 @@ class GostCfb(GostEcb):
         prev_block = self.__init_vec
         for i in range(0, len(plaintext), self._BLOCK_SIZE):
             block = plaintext[i:i + self._BLOCK_SIZE]
-            self.__steps.add_block(_bytes_to_int(block))
+            self._steps.add_block(_bytes_to_int(block))
             encrypted_block = self._xor_bytes(block, self._gamma(prev_block))
-            self.__steps.add_block_res(_bytes_to_int(encrypted_block))
+            self._steps.add_block_res(_bytes_to_int(encrypted_block))
             encrypted_data += encrypted_block
             prev_block = encrypted_block
         return encrypted_data
@@ -215,9 +215,9 @@ class GostCfb(GostEcb):
         prev_block = self.__init_vec
         for i in range(0, len(ciphertext), self._BLOCK_SIZE):
             block = ciphertext[i:i + self._BLOCK_SIZE]
-            self.__steps.add_block(_bytes_to_int(block))
+            self._steps.add_block(_bytes_to_int(block))
             decrypted_block = self._xor_bytes(block, self._gamma(prev_block))
-            self.__steps.add_block_res(_bytes_to_int(decrypted_block))
+            self._steps.add_block_res(_bytes_to_int(decrypted_block))
             decrypted_data += decrypted_block
             prev_block = block
         return decrypted_data
