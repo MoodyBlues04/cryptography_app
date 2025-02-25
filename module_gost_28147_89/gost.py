@@ -32,6 +32,7 @@ class GostEcb:
         [13, 11, 4, 1, 3, 15, 5, 9, 0, 10, 14, 7, 6, 8, 2, 12],
         [1, 15, 13, 0, 5, 7, 10, 4, 9, 2, 3, 14, 6, 11, 8, 12]
     ]
+    _ROUNDS_COUNT = 32
     _KEY_SIZE = 32
     _BLOCK_SIZE = 8
 
@@ -62,7 +63,7 @@ class GostEcb:
 
     def _encrypt_block(self, block: int) -> int:
         left, right = block >> 32, block & 0xFFFFFFFF
-        for i in range(32):
+        for i in range(self._ROUNDS_COUNT):
             subkey = self._subkeys[self.__get_subkey_idx(i)]
             new_right = left ^ self._f_function(right, subkey)
             left, right = right, new_right
@@ -70,7 +71,7 @@ class GostEcb:
 
     def _decrypt_block(self, block: int) -> int:
         left, right = block >> 32, block & 0xFFFFFFFF
-        for i in range(31, -1, -1):
+        for i in range(self._ROUNDS_COUNT - 1, -1, -1):
             subkey = self._subkeys[self.__get_subkey_idx(i)]
             new_left = right ^ self._f_function(left, subkey)
             left, right = new_left, left
