@@ -68,7 +68,7 @@ def gost_28147_89_encrypt():
     import traceback
     data = request.json
     try:
-        return jsonify({'text': gost_28147.encrypt(data)})
+        return jsonify(gost_28147.encrypt(data))
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -80,7 +80,7 @@ def gost_28147_89_decrypt():
     import traceback
     data = request.json
     try:
-        return jsonify({'text': gost_28147.decrypt(data)})
+        return jsonify(gost_28147.decrypt(data))
     except Exception as e:
         print(e)
         traceback.print_exc()

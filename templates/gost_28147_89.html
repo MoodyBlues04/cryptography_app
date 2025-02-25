@@ -26,6 +26,48 @@
         .hidden {
             display: none;
         }
+
+        .algo-steps-container {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .block-container {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .round-container {
+            display: flex;
+            width: 100%;
+            align-items: start;
+            justify-content: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            row-gap: 30px;
+        }
+
+        .matrix-table {
+            border-collapse: collapse;
+            margin: 0 20px;
+            width: 50%;
+        }
+
+        .matrix-table, .matrix-table th, .matrix-table td {
+            border: 1px solid black;
+        }
+
+        .matrix-table tr th, .matrix-table tr td {
+            width: 50%;
+            height: 40px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -158,13 +200,50 @@
         return el;
     }
 
-    function setUpVisualizationDiv(text) {
+    function setUpVisualizationDiv(result) {
         const visualizationDiv = document.getElementById('visualization');
         visualizationDiv.innerHTML = '<hr/>' +
             '<h3 class="text-center">Результат</h3>' +
             '<label for="result" class="form-label">Результат:</label>' +
-            `<input id="result" class="form-control" value="${text}" readonly/>`;
+            `<input id="result" class="form-control" value="${result}" readonly/>`;
         return visualizationDiv;
+    }
+
+    const makeAlgoSteps = (steps, visualizationDiv) => {
+        const algoStepsContainer = makeElWithClass('div', 'algo-steps-container');
+
+        for (const [blockIdx, block] of steps.entries()) {
+            algoStepsContainer.appendChild(makeBlockExplanation(block, blockIdx));
+        }
+        visualizationDiv.appendChild(algoStepsContainer);
+    }
+
+    const makeBlockExplanation = (block, blockIdx) => {
+        const blockContainer = makeElWithClass('div', 'block-container');
+
+        blockContainer.appendChild(makeElWithText('h4', `Блок ${blockIdx}`));
+        blockContainer.style.setProperty('margin-top', '20px');
+        const transformationDescription = makeElWithText('div', `'${block['block']}' → '${block['result']}'`);
+        transformationDescription.style = "margin-bottom: 15px";
+        blockContainer.appendChild(transformationDescription);
+        const roundsInfo = makeElWithText('h5', 'Преобразования:');
+        roundsInfo.style = "margin-bottom: 15px";
+        blockContainer.appendChild(roundsInfo);
+
+        const matEl = makeElWithClass('table', 'matrix-table');
+        const addRow = (row) => {
+            const trEl = document.createElement('tr');
+            trEl.appendChild(makeElWithText('td', row[0]));
+            trEl.appendChild(makeElWithText('td', row[1]));
+            matEl.appendChild(trEl);
+        }
+        addRow(['N1', 'N2']);
+        for (const round of block['rounds']) {
+            addRow(round);
+        }
+        blockContainer.appendChild(matEl);
+
+        return blockContainer;
     }
 
     const KEY_BYTES_CNT = 32, INIT_VEC_BYTES_CNT = 8, NONCE_BYTES_CNT = 4;
@@ -207,7 +286,9 @@
         try {
             const params = makeParams();
             const response = await fetchEncrypt(params);
-            setUpVisualizationDiv(response.text);
+            console.log(response);
+            const visualizationDiv = setUpVisualizationDiv(response.result);
+            makeAlgoSteps(response['steps'],visualizationDiv);
         } catch (e) {
             alert(`Ошибка: ${e}`);
             throw e;
@@ -221,7 +302,8 @@
         try {
             const params = makeParams();
             const response = await fetchDecrypt(params);
-            setUpVisualizationDiv(response.text);
+            const visualizationDiv = setUpVisualizationDiv(response.result);
+            makeAlgoSteps(response['steps'],visualizationDiv);
         } catch (e) {
             alert(`Ошибка: ${e}`);
             throw e;
