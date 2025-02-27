@@ -109,15 +109,15 @@
     <div id="CTR-container" class="row g-3 needs-validation justify-content-center hidden" style="margin-top: 10px">
         <div class="col-4 offset-2">
             <label for="nonce" class="form-label">Синхропосылка:</label>
-            <input type="text" id="nonce" class="form-control" value="4 bt">
+            <input type="text" id="nonce" class="form-control" value="Eight bt">
             <div class="invalid-feedback" id="nonce-error-message">
-                Длина синхропосылки должна быть 4 байта
+                Длина синхропосылки должна быть 8 байта
             </div>
             <small>Лучше использовать латиницу для совпадения числа байт</small>
         </div>
         <div class="col-4">
             <label for="nonce_bytes_cnt" class="form-label">Число байт в синхропосылке:</label>
-            <input type="number" id="nonce_bytes_cnt" class="form-control" value="4" readonly>
+            <input type="number" id="nonce_bytes_cnt" class="form-control" value="8" readonly>
         </div>
     </div>
 
@@ -246,7 +246,7 @@
         return blockContainer;
     }
 
-    const KEY_BYTES_CNT = 32, INIT_VEC_BYTES_CNT = 8, NONCE_BYTES_CNT = 4;
+    const KEY_BYTES_CNT = 32, INIT_VEC_BYTES_CNT = 8, NONCE_BYTES_CNT = 8;
     const EL_TO_BYTES_CNT = {
         'key': KEY_BYTES_CNT,
         'init_vec': INIT_VEC_BYTES_CNT,
@@ -330,7 +330,7 @@
     }
 
     const setDefaultCTR = () => {
-        document.getElementById('nonce').value = '4 bt';
+        document.getElementById('nonce').value = 'Eight bt';
         checkBytesCnt('nonce', EL_TO_BYTES_CNT['nonce'])
     }
 

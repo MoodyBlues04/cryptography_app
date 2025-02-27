@@ -160,34 +160,46 @@ class GostEcb:
 
 
 class GostCtr(GostEcb):
-    def __init__(self, key: bytes, nonce: bytes = None, s_box: List[List[int]] = None) -> None:
+    __C1 = 0x1010104
+    __C2 = 0x1010101
+
+    def __init__(self, key: bytes, init_vec: bytes = None, s_box: List[List[int]] = None) -> None:
         super().__init__(key, s_box)
-        if nonce is None:
-            nonce = os.urandom(4)
-        self.__validate_nonce(nonce)
-        self.__nonce = int.from_bytes(nonce, byteorder='big')
+        if init_vec is None:
+            init_vec = os.urandom(self._BLOCK_SIZE)
+        self.__validate_init_vec(init_vec)
+        self.__init_vec = _bytes_to_int(init_vec)
 
     def encrypt(self, plaintext: Union[bytes, str]) -> bytes:
+        self._steps = GostSteps()
         plaintext = self.s_to_bytes(plaintext)
 
         encrypted_data = b''
+
+        n1, n2 = self.__init_vec >> 32, self.__init_vec & 0xFFFFFFFF
+
         for i in range(0, len(plaintext), self._BLOCK_SIZE):
+            n1 = (n1 + self.__C2) % 2 ** 32
+            n2 = (n2 + self.__C1) % (2 ** 32 - 1)
             block = plaintext[i:i + self._BLOCK_SIZE]
             self._steps.add_block(_bytes_to_int(block))
-            encrypted_block = self._xor_bytes(block, self._gamma(i))
+            gamma = self._gamma(n1, n2)
+            encrypted_block = self._xor_bytes(block, gamma[:len(block)])
             self._steps.add_block_res(_bytes_to_int(encrypted_block))
             encrypted_data += encrypted_block
+
         return encrypted_data
 
     def decrypt(self, ciphertext: bytes) -> bytes:
         return self.encrypt(ciphertext)
 
-    def _gamma(self, counter: int) -> bytes:
-        return self._encrypt_block(self.__nonce + counter).to_bytes(self._BLOCK_SIZE, 'big')
+    def _gamma(self, n1: int, n2: int) -> bytes:
+        encrypted_block = self._encrypt_block((n1 << 32) | n2)
+        return encrypted_block.to_bytes(8, 'big')
 
-    def __validate_nonce(self, nonce: bytes) -> None:
-        if len(nonce) != 4:
-            raise ValueError("Nonce должен быть длиной 4 байта.")
+    def __validate_init_vec(self, nonce: bytes) -> None:
+        if len(nonce) != self._BLOCK_SIZE:
+            raise ValueError(f"Nonce должен быть длиной {self._BLOCK_SIZE} байт.")
 
 
 class GostCfb(GostEcb):
@@ -198,6 +210,8 @@ class GostCfb(GostEcb):
         self.__init_vec = init_vec
 
     def encrypt(self, plaintext: Union[bytes, str]) -> bytes:
+        self._steps = GostSteps()
+
         plaintext = self.s_to_bytes(plaintext)
         encrypted_data = b''
         prev_block = self.__init_vec
@@ -211,6 +225,8 @@ class GostCfb(GostEcb):
         return encrypted_data
 
     def decrypt(self, ciphertext: bytes) -> bytes:
+        self._steps = GostSteps()
+
         decrypted_data = b''
         prev_block = self.__init_vec
         for i in range(0, len(ciphertext), self._BLOCK_SIZE):
