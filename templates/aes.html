@@ -262,7 +262,7 @@
         hiddenContainer.id = 'hidden-steps';
 
         blockContainer.appendChild(makeElWithText('h4', `Блок ${blockIdx}`));
-        const transformationDescription = makeElWithText('div', `'${block['block']}' → '${block['block_result']}'`);
+        const transformationDescription = makeElWithText('div', `'${block['block'].trim()}' → '${block['block_result'].trim()}'`);
         transformationDescription.style = "margin-bottom: 15px";
         blockContainer.appendChild(transformationDescription);
 
@@ -330,7 +330,7 @@
             const stateAsRow = makeStateMatrix(matToRow(lastStep['state']));
             stateAsRow.style.setProperty('height', '25px');
 
-            explanationContainer.appendChild(makeElWithText('h5', `Блок : '${blockValue}'`));
+            explanationContainer.appendChild(makeElWithText('h5', `Блок : '${blockValue.trim()}'`));
             explanationContainer.appendChild(makeVerticalArrow());
             explanationContainer.appendChild(makeElWithText('h5', `Полученная матрица:`));
             explanationContainer.appendChild(stateMatrix);
