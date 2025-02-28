@@ -249,8 +249,8 @@
         return container;
     }
 
-    const toggleVisibility = () => {
-        const hiddenSteps = document.getElementById('hidden-steps');
+    const toggleVisibility = (blockIdx) => {
+        const hiddenSteps = document.getElementById(`hidden-steps-${blockIdx}`);
         const btn = document.getElementById('toggle-visibility');
         btn.innerText = hiddenSteps.classList.contains('hidden-el') ? 'Скрыть' : 'Показать скрытые шаги';
         hiddenSteps.classList.toggle('hidden-el');
@@ -259,7 +259,7 @@
     const makeBlockExplanation = (block, blockIdx) => {
         const blockContainer = makeElWithClass('div', 'block-container');
         const hiddenContainer = makeElWithClass('div', 'block-container hidden-el');
-        hiddenContainer.id = 'hidden-steps';
+        hiddenContainer.id = `hidden-steps-${blockIdx}`;
 
         blockContainer.appendChild(makeElWithText('h4', `Блок ${blockIdx}`));
         const transformationDescription = makeElWithText('div', `'${block['block'].trim()}' → '${block['block_result'].trim()}'`);
@@ -291,7 +291,7 @@
             toggleStepsVisibility.id = 'toggle-visibility';
             toggleStepsVisibility.innerText = 'Показать скрытые шаги';
             toggleStepsVisibility.style = 'margin-bottom: 10px';
-            toggleStepsVisibility.onclick = toggleVisibility;
+            toggleStepsVisibility.onclick = () => toggleVisibility(blockIdx);
 
             blockContainer.appendChild(toggleStepsVisibility);
             blockContainer.appendChild(hiddenContainer);
