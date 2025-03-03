@@ -251,8 +251,8 @@
 
     const toggleVisibility = (blockIdx) => {
         const hiddenSteps = document.getElementById(`hidden-steps-${blockIdx}`);
-        const btn = document.getElementById('toggle-visibility');
-        btn.innerText = hiddenSteps.classList.contains('hidden-el') ? 'Скрыть' : 'Показать скрытые шаги';
+        const btn = document.getElementById(`toggle-visibility-${blockIdx}`);
+        btn.innerText = hiddenSteps.classList.contains('hidden-el') ? 'Скрыть шаги' : 'Показать скрытые шаги';
         hiddenSteps.classList.toggle('hidden-el');
     }
 
@@ -288,7 +288,7 @@
         }
         if (block['rounds'].length > 2) {
             const toggleStepsVisibility = document.createElement('button');
-            toggleStepsVisibility.id = 'toggle-visibility';
+            toggleStepsVisibility.id = `toggle-visibility-${blockIdx}`;
             toggleStepsVisibility.innerText = 'Показать скрытые шаги';
             toggleStepsVisibility.style = 'margin-bottom: 10px';
             toggleStepsVisibility.onclick = () => toggleVisibility(blockIdx);
